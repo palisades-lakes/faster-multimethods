@@ -6,7 +6,7 @@
   {:doc "Benchmark utilities."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-05-29"
-   :version "2017-07-30"}
+   :version "2017-08-02"}
   
   (:require [clojure.string :as s]
             [clojure.java.io :as io]
@@ -15,6 +15,7 @@
             [benchtools.random.generators :as g])
   
   (:import [java.nio.file FileSystems PathMatcher]
+           [java.time.format DateTimeFormatter]
            [benchtools.java SystemInfo]))
 ;;----------------------------------------------------------------
 (set! *warn-on-reflection* false)
@@ -103,10 +104,18 @@
       (mapv #(zipmap header (s/split % #"\t" -1)) (rest lines)))))
 (defn read-tsvs [files] (mapcat read-tsv files))
 ;;----------------------------------------------------------------
+(let [^DateTimeFormatter dtf 
+      (DateTimeFormatter/ofPattern "yyyyMMdd-HHmm")]
+  (defn- now ^String []
+    (.format dtf (java.time.LocalDateTime/now))))
+                                  
 (defn fname [data0 data1 n ext]
   (str (SystemInfo/manufacturerModel)
-       "." (fn-name data0) "." (fn-name data1) "." n
-       "." (java.time.LocalDate/now) "." ext))
+       "." (fn-name data0) 
+       "." (fn-name data1)
+       "." n
+       "." (now)
+       "." ext))
 ;;----------------------------------------------------------------
 (defn ^java.io.File ns-folder [prefix for-ns]
   (let [^java.io.File f (apply 
@@ -225,7 +234,7 @@
            :value (int (:value record))
            :lower-q (* 1000.0 (double (first (:lower-q record))))
            :upper-q (* 1000.0 (double (first (:upper-q record))))
-           :today (str (java.time.LocalDate/now)))))
+           :now (now))))
 ;;----------------------------------------------------------------
 (defn criterium 
 
