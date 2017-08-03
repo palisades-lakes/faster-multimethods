@@ -117,6 +117,11 @@ public final class IntegerInterval implements Set {
     if (that.max <= min) { return false; }
     return true; }
 
+  public final boolean intersects (final LongInterval that) {
+    if (max <= that.min) { return false; }
+    if (that.max <= min) { return false; }
+    return true; }
+
   public final boolean intersects (final java.util.Set that) {
     for (final Object x : that) {
       if (contains(x)) { return true; } }
