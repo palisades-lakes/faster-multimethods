@@ -8,5 +8,6 @@ The code itself may have examples that are useful starting
 points.
 
 Builds with [Apache Maven](https://maven.apache.org/), 
-specifically the [clojure-maven-plugin](https://github.com/talios/clojure-maven-plugin).
+specifically the 
+[clojure-maven-plugin](https://github.com/talios/clojure-maven-plugin).
 
