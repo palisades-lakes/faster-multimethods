@@ -388,15 +388,29 @@
     </exclusion>
    </exclusions>
   </dependency>
-  <!-- <dependency> <groupId>hiccup</groupId> <artifactId>hiccup</artifactId> <version>1.0.5</version> 
-   <exclusions> <exclusion> <groupId>org.clojure</groupId> <artifactId>clojure</artifactId> 
-   </exclusion> </exclusions> </dependency> -->
-  <!-- <dependency> <groupId>codox</groupId> <artifactId>codox</artifactId> <version>0.10.3</version> 
-   <exclusions> <exclusion> <groupId>org.ow2.asm</groupId> <artifactId>asm</artifactId> 
-   </exclusion> <exclusion> <groupId>org.ow2.asm</groupId> <artifactId>asm-analysis</artifactId> 
-   </exclusion> <exclusion> <groupId>org.ow2.asm</groupId> <artifactId>asm-tree</artifactId> 
-   </exclusion> <exclusion> <groupId>org.ow2.asm</groupId> <artifactId>asm-util</artifactId> 
-   </exclusion> </exclusions> </dependency> -->
+    <dependency>
+   <groupId>codox</groupId>
+   <artifactId>codox</artifactId>
+   <version>0.10.3</version>
+   <exclusions>
+    <exclusion>
+     <groupId>org.ow2.asm</groupId>
+     <artifactId>asm</artifactId>
+    </exclusion>
+    <exclusion>
+     <groupId>org.ow2.asm</groupId>
+     <artifactId>asm-analysis</artifactId>
+    </exclusion>
+    <exclusion>
+     <groupId>org.ow2.asm</groupId>
+     <artifactId>asm-tree</artifactId>
+    </exclusion>
+    <exclusion>
+     <groupId>org.ow2.asm</groupId>
+     <artifactId>asm-util</artifactId>
+    </exclusion>
+   </exclusions>
+  </dependency>
  </dependencies>
  <groupId>palisades-lakes</groupId>
  <artifactId>benchtools</artifactId>
