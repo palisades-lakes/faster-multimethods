@@ -6,7 +6,7 @@
   {:doc "Benchmark utilities."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-05-29"
-   :version "2017-08-02"}
+   :version "2017-08-07"}
   
   (:require [clojure.string :as s]
             [clojure.java.io :as io]
@@ -47,7 +47,7 @@
   []
   (max 1 (- (.availableProcessors (Runtime/getRuntime)) 2)))
 ;;----------------------------------------------------------------
-;; TODO: include dataset-generator file name
+;; TODO: include dataset-generator in file name
 (defn generate-datasets 
   
   ([counter
@@ -56,7 +56,10 @@
     ^Class element-type 
     nelements
     nthreads]
-    {(keyword (str "generator" counter)) 
+    {:nelements nelements
+     :nthreads nthreads
+     
+     (keyword (str "generator" counter)) 
      (fn-name element-generator) 
      
      (keyword (str "dataset-generator" counter)) 
@@ -245,7 +248,6 @@
     (let [options (merge {:tail-quantile 0.25 :samples 60}
                          options)
           fname (fn-name f)
-          ;; results seem
           nthreads (long (:nthreads data-map (default-nthreads)))
           calls (map (fn caller [s0i s1i] #(f s0i s1i))
                      (:data0 data-map) (:data1 data-map))
