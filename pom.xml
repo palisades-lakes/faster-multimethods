@@ -37,6 +37,11 @@
      <groupId>org.apache.maven.plugins</groupId>
      <artifactId>maven-release-plugin</artifactId>
      <version>${maven-release-plugin-version}</version>
+     <!-- change to deploy to deploy to a maven repo as well as installing the source 
+      in Github. Need to setup distributionManagement for that. -->
+     <configuration>
+      <goals>install</goals>
+     </configuration>
     </plugin>
     <plugin>
      <groupId>org.eclipse.m2e</groupId>
@@ -343,11 +348,9 @@
  </description>
  <!-- <scm> <connection>scm:git:file://.</connection> <developerConnection>scm:git:file://.</developerConnection> 
   <url>scm:git:file://.</url> <tag>HEAD</tag> </scm> -->
- 
  <scm>
   <connection>${github-url}</connection>
   <developerConnection>${github-url}</developerConnection>
   <url>${github-url}</url>
  </scm>
- 
- </project>
+</project>
