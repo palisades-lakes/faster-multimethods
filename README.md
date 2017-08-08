@@ -132,6 +132,29 @@ Clojure collections would make this little library unnecessary.
     
 ## Usage
 
+### Dependency 
+
+Available from 
+[Clojars](https://clojars.org/palisades-lakes/faster-multimethods):
+
+Maven:
+
+```xml
+<dependency>
+  <groupId>palisades-lakes</groupId>
+  <artifactId>faster-multimethods</artifactId>
+  <version>0.0.3</version>
+</dependency>
+```
+
+Leinigen/Boot:
+```clojure
+Leiningen/Boot
+[palisades-lakes/faster-multimethods "0.0.3"]
+```
+
+### Code examples
+
 Fastest:
 
 ```
