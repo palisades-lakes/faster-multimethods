@@ -341,11 +341,14 @@
  "Backwards compatible alternative to clojure's
  defmulti/defmethod, with about 1/10 the method lookup overhead."
  </description>
- <!-- local repo <scm> <connection>scm:git:file://.</connection> <developerConnection>scm:git:file://.</developerConnection> 
-  <url>scm:git:file://.</url> <tag>HEAD</tag> </scm> -->
+ <!-- local repo -->
+ <scm> <connection>scm:git:file://.</connection> <developerConnection>scm:git:file://.</developerConnection> 
+  <url>scm:git:file://.</url> <tag>HEAD</tag> </scm>
+  <!-- 
  <scm>
   <connection>${github-url}</connection>
   <developerConnection>${github-url}</developerConnection>
   <url>${github-url}</url>
  </scm>
+  -->
 </project>
