@@ -1,1 +1,3 @@
 *.rb linguist-language=Clojure
+src/main/java/* linguist-vendored
+src/test/java/* linguist-vendored
