@@ -109,9 +109,9 @@ Clojure collections would make this little library unnecessary.
     Method lookup overhead is then about 8% of Clojure 1.8.0.
     
     Every multimethod (instance of MultiFn) contains a reference
-    to a (unfortunately named) 'hierarchy`, which provides
-    a partial ordering of dispatch values thru a directed acyclic graph
-    whose nodes are atomic dispatch values (Named,
+    to a (unfortunately named) `hierarchy`, which provides
+    a partial ordering of dispatch values thru a directed acyclic
+    graph whose nodes are atomic dispatch values (Named,
     and Classes). The graph includes implied edges 
     from the `isAssignableFrom` Class graph as well as explicit
     edges added using `derive`.
@@ -123,6 +123,11 @@ Clojure collections would make this little library unnecessary.
     However, an important special case is one where only Classes
     are used as atomic dispatch values. In this case, the hierarchy
     is irrelevant. 
+    
+    Removing the need for synchronizing with the `hierarchy`,
+    reduces the overhead by 3 percentage points 
+    (relative to Clojure 1.8.0) and by about 25 percent relative 
+    to stage 3.
     
     
 ## Usage
@@ -169,7 +174,9 @@ Most general:
  ...
  ``` 
   
-## ![Yourkit](https://www.yourkit.com/images/yklogo.png)
+## Acknowledgements
+
+### ![Yourkit](https://www.yourkit.com/images/yklogo.png)
 
 YourKit is kindly supporting open source projects with its full-featured Java
 Profiler.
