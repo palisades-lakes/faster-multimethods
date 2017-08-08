@@ -21,7 +21,7 @@
   <maven-release-plugin-version>2.5.3</maven-release-plugin-version>
   <maven-scm-plugin-version>1.9.5</maven-scm-plugin-version>
   <maven-site-version>3.6</maven-site-version>
-  <github-connection>scm:git:https://github.com/palisades-lakes/faster-multimethods.git</github-connection>
+  <github-url>scm:git:https://github.com/palisades-lakes/faster-multimethods.git</github-url>
  </properties>
  <build>
   <pluginManagement>
