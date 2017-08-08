@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project
+ xmlns="http://maven.apache.org/POM/4.0.0"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
  <modelVersion>4.0.0</modelVersion>
  <properties>
   <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -17,6 +21,7 @@
   <maven-release-plugin-version>2.5.3</maven-release-plugin-version>
   <maven-scm-plugin-version>1.9.5</maven-scm-plugin-version>
   <maven-site-version>3.6</maven-site-version>
+  <github-connection>scm:git:git@github.com:palisades-lakes/faster-multimethods.git</github-connection>
  </properties>
  <build>
   <pluginManagement>
@@ -336,10 +341,11 @@
  "Backwards compatible alternative to clojure's
  defmulti/defmethod, with about 1/10 the method lookup overhead."
  </description>
+ <!-- local repo <scm> <connection>scm:git:file://.</connection> <developerConnection>scm:git:file://.</developerConnection> 
+  <url>scm:git:file://.</url> <tag>HEAD</tag> </scm> -->
  <scm>
-  <connection>scm:git:file://.</connection>
-  <developerConnection>scm:git:file://.</developerConnection>
-  <url>scm:git:file://.</url>
-   <tag>HEAD</tag>
-  </scm>
+  <connection>${github-url}</connection>
+  <developerConnection>${github-url}</developerConnection>
+  <url>${github-url}</url>
+ </scm>
 </project>

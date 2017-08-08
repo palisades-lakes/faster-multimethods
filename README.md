@@ -137,8 +137,7 @@ Fastest:
   
   {}  
   
-  (fn intersects?-dispatch [s0 s1] 
-    (fmc/extract-signature s0 s1))
+  (fn intersects?-dispatch [s0 s1] (fmc/extract-signature s0 s1))
   
   :hierarchy false)
   
@@ -160,8 +159,7 @@ Most general:
   
   {}  
   
-  (fn intersects?-dispatch [s0 s1] 
-    (Signature2/get (.getClass ^Object s0) (.getClass ^Object s1))))
+  (fn intersects?-dispatch [s0 s1] [(class s0) (class s1))))
   
 (fmc/defmethod intersects? 
   [IntegerInterval java.util.Set]
