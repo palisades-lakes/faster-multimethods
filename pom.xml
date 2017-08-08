@@ -339,7 +339,7 @@
  </dependencies>
  <groupId>palisades-lakes</groupId>
  <artifactId>faster-multimethods</artifactId>
- <version>0.0.1-SNAPSHOT</version>
+ <version>0.0.1</version>
  <description>
  "Backwards compatible alternative to clojure's
  defmulti/defmethod, with about 1/10 the method lookup overhead."
@@ -348,6 +348,6 @@
   <connection>${github-url}</connection>
   <developerConnection>${github-url}</developerConnection>
   <url>${github-url}</url>
-  <tag>HEAD</tag>
+  <tag>faster-multimethods-0.0.1</tag>
   </scm>
 </project>
