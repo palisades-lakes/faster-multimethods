@@ -18,6 +18,8 @@
   <maven-scm-plugin-version>1.9.5</maven-scm-plugin-version>
   <maven-site-version>3.6</maven-site-version>
   <github-url>scm:git:https://github.com/palisades-lakes/faster-multimethods.git</github-url>
+  <!-- github-url>scm:git:file://.</github-url -->
+  
  </properties>
  <build>
   <pluginManagement>
@@ -337,17 +339,15 @@
  </dependencies>
  <groupId>palisades-lakes</groupId>
  <artifactId>faster-multimethods</artifactId>
- <version>0.0.0</version>
+ <version>0.0.1-SNAPSHOT</version>
  <description>
  "Backwards compatible alternative to clojure's
  defmulti/defmethod, with about 1/10 the method lookup overhead."
  </description>
- <!-- <scm> <connection>scm:git:file://.</connection> <developerConnection>scm:git:file://.</developerConnection> 
-  <url>scm:git:file://.</url> <tag>HEAD</tag> </scm> -->
  <scm>
   <connection>${github-url}</connection>
   <developerConnection>${github-url}</developerConnection>
   <url>${github-url}</url>
-   <tag>faster-multimethods-0.0.0</tag>
+  <tag>HEAD</tag>
   </scm>
 </project>
