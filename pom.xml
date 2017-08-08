@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project
+ xmlns="http://maven.apache.org/POM/4.0.0"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
  <modelVersion>4.0.0</modelVersion>
  <properties>
   <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -19,7 +23,6 @@
   <maven-site-version>3.6</maven-site-version>
   <github-url>scm:git:https://github.com/palisades-lakes/faster-multimethods.git</github-url>
   <!-- github-url>scm:git:file://.</github-url -->
-  
  </properties>
  <build>
   <pluginManagement>
@@ -350,12 +353,12 @@
   <developerConnection>${github-url}</developerConnection>
   <url>${github-url}</url>
   <tag>HEAD</tag>
-  </scm>
-  <distributionManagement>
+ </scm>
+ <distributionManagement>
   <repository>
-    <id>clojars</id>
-    <name>Clojars repository</name>
-    <url>https://clojars.org/repo</url>
+   <id>clojars</id>
+   <name>Clojars repository</name>
+   <url>https://clojars.org/repo</url>
   </repository>
-</distributionManagement>
+ </distributionManagement>
 </project>
