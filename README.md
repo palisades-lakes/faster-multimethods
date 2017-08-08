@@ -138,12 +138,12 @@ Fastest:
   {}  
   
   (fn intersects?-dispatch [s0 s1] 
-    (Signature2/get (.getClass ^Object s0) (.getClass ^Object s1)))
+    (fmc/extract-signature s0 s1))
   
   :hierarchy false)
   
 (fmc/defmethod intersects? 
-  (Signature2/get IntegerInterval java.util.Set)
+  (fmc/signature IntegerInterval java.util.Set)
   [^IntegerInterval s0 ^java.util.Set s1]
   (.intersects s0 s1))
   
