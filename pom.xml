@@ -38,7 +38,8 @@
      <!-- change to deploy to deploy to a maven repo as well as installing the source 
       in Github. Need to setup distributionManagement for that. -->
      <configuration>
-      <goals>install</goals>
+      <!-- goals>install</goals -->
+      <goals>deploy</goals>
      </configuration>
     </plugin>
     <plugin>
@@ -350,4 +351,11 @@
   <url>${github-url}</url>
   <tag>HEAD</tag>
   </scm>
+  <distributionManagement>
+  <repository>
+    <id>clojars</id>
+    <name>Clojars repository</name>
+    <url>https://clojars.org/repo</url>
+  </repository>
+</distributionManagement>
 </project>
