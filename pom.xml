@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project
- xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
  xmlns="http://maven.apache.org/POM/4.0.0"
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
 >
  <modelVersion>4.0.0</modelVersion>
  <properties>
@@ -18,11 +18,46 @@
   <maven-jar-version>3.0.2</maven-jar-version>
   <maven-javadoc-version>3.0.0-M1</maven-javadoc-version>
   <maven-project-info-reports-version>2.9</maven-project-info-reports-version>
+  <maven-release-plugin-version>2.5.3</maven-release-plugin-version>
+  <maven-scm-plugin-version>1.9.5</maven-scm-plugin-version>
   <maven-site-version>3.6</maven-site-version>
+  <github-url>scm:git:https://github.com/palisades-lakes/faster-multimethods.git</github-url>
+  <!-- github-url>scm:git:file://.</github-url -->
  </properties>
+ <scm>
+  <connection>${github-url}</connection>
+  <developerConnection>${github-url}</developerConnection>
+  <url>${github-url}</url>
+  <tag>HEAD</tag>
+ </scm>
+ <distributionManagement>
+  <repository>
+   <id>clojars</id>
+   <name>Clojars repository</name>
+   <url>https://clojars.org/repo</url>
+  </repository>
+ </distributionManagement>
  <build>
   <pluginManagement>
    <plugins>
+    <plugin>
+     <groupId>org.apache.maven.plugins</groupId>
+     <artifactId>maven-scm-plugin</artifactId>
+     <version>${maven-scm-plugin-version}</version>
+     <!-- configuration> <connectionType>connection</connectionType> <connectionType>developerConnection</connectionType> 
+      </configuration -->
+    </plugin>
+    <plugin>
+     <groupId>org.apache.maven.plugins</groupId>
+     <artifactId>maven-release-plugin</artifactId>
+     <version>${maven-release-plugin-version}</version>
+     <!-- change to deploy to deploy to a maven repo as well as installing the source 
+      in Github. Need to setup distributionManagement for that. -->
+     <configuration>
+      <!-- goals>install</goals -->
+      <goals>deploy</goals>
+     </configuration>
+    </plugin>
     <plugin>
      <groupId>org.eclipse.m2e</groupId>
      <artifactId>lifecycle-mapping</artifactId>
@@ -63,6 +98,15 @@
    </plugins>
   </pluginManagement>
   <plugins>
+   <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-release-plugin</artifactId>
+    <configuration>
+     <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
+     <autoVersionSubmodules>true</autoVersionSubmodules>
+     <localCheckout>true</localCheckout>
+    </configuration>
+   </plugin>
    <plugin>
     <artifactId>maven-clean-plugin</artifactId>
     <version>${maven-clean-version}</version>
@@ -114,13 +158,13 @@
     <configuration>
      <clojureOptions>-Dclojure.compiler.direct-linking=true</clojureOptions>
      <namespaces>
-      <namespace>!mthcmp.test.*</namespace>
+      <namespace>!benchtools.doc.*</namespace>
      </namespaces>
      <copiedNamespaces>
       <namespace>!.*</namespace>
      </copiedNamespaces>
      <testNamespaces>
-      <namespace>!mthcmp.test.defs.*</namespace>
+      <namespace>!benchtools.test.*</namespace>
      </testNamespaces>
     </configuration>
    </plugin>
