@@ -54,18 +54,23 @@ See also:
 It is possible that performance improvements to the
 Clojure collections would make this little library unnecessary.
 
+    **TODO:** check for behavior differences between `Map.get(k)`
+    and `ILookup.valAt(k)`, especially with `Named` and `IPersistentVector`
+    keys.
+
 2. Make the `methodCache` non-volatile. 
 
     Method lookup overhead for this benchmark is also about 14% 
     of Clojure 1.8.0.
     
-    This change may cause redundant cache updates, but I believe that's
-    sufficiently low probability to not affect any performance gain, 
-    and, in any case, the cache should converge quickly to a stable state.
+    This change may cause redundant cache updates, but I believe
+    that's sufficiently low probability to not affect any
+    performance gain, and, in any case, the cache should converge
+    quickly to a stable state.
     
     If my reasoning about this is wrong, I'd like to know.
     Since it doesn't actually improve this particular benchmark
-    I may revert anyway.
+    I may revert this anyway.
     
 3. Support more efficient dispatch values.  
 
@@ -102,14 +107,15 @@ Clojure collections would make this little library unnecessary.
     
     What I've chosen to do here is add support for what I believe
     is an important special case: short immutable lists of Classes:
-    no Symbols or Keywords, no arbitrary 'hierarchy', and no recursion.
+    no Symbols or Keywords, no arbitrary hierarchy, and no
+    recursion.
     
 4. Permit a `:hierarchy false` option.
 
     Method lookup overhead is then about 8% of Clojure 1.8.0.
     
     Every multimethod (instance of MultiFn) contains a reference
-    to a (unfortunately named) `hierarchy`, which provides
+    to a `hierarchy`, which provides
     a partial ordering of dispatch values thru a directed acyclic
     graph whose nodes are atomic dispatch values (Named,
     and Classes). The graph includes implied edges 
@@ -128,6 +134,9 @@ Clojure collections would make this little library unnecessary.
     reduces the overhead by 3 percentage points 
     (relative to Clojure 1.8.0) and by about 25 percent relative 
     to stage 3.
+    
+    TODO: would allowing for pure `Named` hierarchy dispatch
+    (no classes) have similar performance benefits?
     
     
 ## Usage
