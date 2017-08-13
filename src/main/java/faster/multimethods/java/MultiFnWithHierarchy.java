@@ -68,7 +68,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
   private Map methodCache;
   private final Object defaultDispatch;
   private final IRef hierarchy;
-  private volatile Object cachedHierarchy;
+  private volatile Map cachedHierarchy;
 
   private static final Var parents = RT.var("clojure.core","parents");
 
@@ -169,13 +169,29 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
       return this; }
     finally { rw.writeLock().unlock(); } }
 
+  private boolean prefers (final Map hierarchy,
+                           final Object x, 
+                           final Object y) {
+    
+    final Set xprefs = (Set) preferTable.get(x);
+    if ((xprefs != null) && xprefs.contains(y)) { return true; }
+    for (ISeq ps = RT.seq(parents.invoke(hierarchy,y)); 
+      ps != null;
+      ps = ps.next()) {
+      if (prefers(hierarchy,x,ps.first())) { return true; } }
+    for (ISeq ps = RT.seq(parents.invoke(hierarchy,x)); 
+      ps != null;
+      ps = ps.next()) {
+      if (prefers(hierarchy,ps.first(),y)) { return true; } }
+    return false; }
+
   @Override
   public MultiFn preferMethod (final Object dispatchX,
                                final Object dispatchY) {
     rw.writeLock().lock();
     try {
-      if (prefers(dispatchY,
-        dispatchX)) { throw new IllegalStateException(
+      if (prefers((Map) cachedHierarchy,dispatchY,dispatchX)) { 
+        throw new IllegalStateException(
           String.format(
             "Preference conflict in multimethod '%s':" +
               "%s is already preferred to %s",
@@ -184,20 +200,6 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
       resetCache();
       return this; }
     finally { rw.writeLock().unlock(); } }
-
-  private boolean prefers (final Object x, 
-                           final Object y) {
-    final Set xprefs = (Set) preferTable.get(x);
-    if ((xprefs != null) && xprefs.contains(y)) { return true; }
-    for (ISeq ps = RT.seq(parents.invoke(y)); 
-      ps != null;
-      ps = ps.next()) {
-      if (prefers(x,ps.first())) { return true; } }
-    for (ISeq ps = RT.seq(parents.invoke(x)); 
-      ps != null;
-      ps = ps.next()) {
-      if (prefers(ps.first(),y)) { return true; } }
-    return false; }
 
   //--------------------------------------------------------------
 
@@ -282,15 +284,12 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
         (IPersistentVector) parent); }
     return false; }
 
-  private boolean isA (final Object child, 
-                       final Object parent) {
-    return isA((Map) hierarchy.deref(), child, parent); }
-
   //--------------------------------------------------------------
 
-  private boolean dominates (final Object x, 
+  private boolean dominates (final Map hierarchy,
+                             final Object x, 
                              final Object y) {
-    return prefers(x,y) || isA(x,y); }
+    return prefers(hierarchy,x,y) || isA(hierarchy,x,y); }
 
   //--------------------------------------------------------------
 
@@ -298,7 +297,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
     rw.writeLock().lock();
     try {
       methodCache = methodTable;
-      cachedHierarchy = hierarchy.deref();
+      cachedHierarchy = (Map) hierarchy.deref();
       return methodCache; }
     finally { rw.writeLock().unlock(); } }
 
@@ -307,16 +306,16 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
     Object bestValue;
     final Map mt = methodTable;
     final Map pt = preferTable;
-    final Object ch = cachedHierarchy;
+    final Map ch = (Map) cachedHierarchy;
     try {
       Map.Entry bestEntry = null;
       for (final Object o : methodTable.entrySet()) {
         final Map.Entry e = (Map.Entry) o;
-        if (isA(dispatch,e.getKey())) {
+        if (isA(ch,dispatch,e.getKey())) {
           if ((bestEntry == null)
-            || dominates(e.getKey(),bestEntry.getKey())) {
+            || dominates(ch,e.getKey(),bestEntry.getKey())) {
             bestEntry = e; }
-          if(! dominates(bestEntry.getKey(), e.getKey())) {
+          if(! dominates(ch,bestEntry.getKey(), e.getKey())) {
             throw new IllegalArgumentException(
               String.format(
                 "Multiple methods in multimethod '%s' " + 

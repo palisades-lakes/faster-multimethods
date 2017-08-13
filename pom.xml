@@ -78,19 +78,22 @@
           <ignore />
          </action>
         </pluginExecution>
-        <pluginExecution>
+        <!--         <pluginExecution>
          <pluginExecutionFilter>
           <groupId>com.theoryinpractise</groupId>
           <artifactId>clojure-maven-plugin</artifactId>
           <versionRange>[${clojure-maven-version},)</versionRange>
           <goals>
            <goal>compile</goal>
+           <goal>test</goal>
           </goals>
          </pluginExecutionFilter>
          <action>
           <ignore />
          </action>
         </pluginExecution>
+         -->
+        
        </pluginExecutions>
       </lifecycleMappingMetadata>
      </configuration>
@@ -164,7 +167,7 @@
       <namespace>!.*</namespace>
      </copiedNamespaces>
      <testNamespaces>
-      <namespace>!faster.multimethods.test.*</namespace>
+      <namespace>faster.multimethods.test.*</namespace>
      </testNamespaces>
     </configuration>
    </plugin>
