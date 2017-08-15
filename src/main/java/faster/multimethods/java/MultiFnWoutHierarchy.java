@@ -34,8 +34,21 @@ import clojure.lang.Var;
 
 import faster.multimethods.java.signature.Signature;
 
-/**
- * Changes from clojure.lang.MultiFn.
+/** Semantic changes to clojure.lang.MultiFn.
+ * 
+ * 1) Make <code>prefers</code> transitive:
+ * <code>(prefer-method f a b)</code> and 
+ * <code>(prefer-method f b c)</code> should imply
+ * <code>(prefer-method f a c)</code>, but that's not 
+ * not true in <code>clojure.lang.MultiFn.prefers(x,y)</code>.
+ * 
+ * 2) The logic in <code>clojure.lang.MultiFn.prefers(x,y)</code>
+ * appears to imply that 
+ * <code>(prefer-method x some-ancestor-of-y)</code>
+ * implies <code>(prefer-method x y)</code>
+ * which make no sense to me. 
+ * 
+ * Performance changes to clojure.lang.MultiFn.
  *
  * 1) Replace persistent data structures with simple
  * unmodifiable HashMaps, etc., requiring some discipline to use
@@ -53,7 +66,7 @@ import faster.multimethods.java.signature.Signature;
  *
  * @author palisades dot lakes at gmail dot com
  * @since 2017-06-20
- * @version 2017-08-04
+ * @version 2017-08-14
  */
 @SuppressWarnings("unchecked")
 public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
@@ -64,8 +77,6 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   private volatile Map methodTable;
   private volatile Map preferTable;
   private Map methodCache;
-
-  private static final Var parents = RT.var("clojure.core","parents");
 
   //--------------------------------------------------------------
 
@@ -158,6 +169,36 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
       return this; }
     finally { rw.writeLock().unlock(); } }
 
+  //--------------------------------------------------------------
+  // TODO: replace call to clojure.core/parents with something
+  // that doesn't refer to the global-hierarchy (a\or any hierarchy)
+
+  private static final Var parents = RT.var("clojure.core","parents");
+
+  private boolean prefers (final Object x, 
+                           final Object y) {
+    final Set xprefs = (Set) preferTable.get(x);
+ 
+    if (xprefs != null) {
+      // is there an explicit prefer-method entry for (x,y)?
+      if (xprefs.contains(y)) { return true; }
+      // transitive closure of prefer-method relation
+      // is x preferred to anything that is preferred to y?
+      for (final Object xx : xprefs) {
+        if (prefers(xx,y)) { return true; } } }
+
+    // are any of x's parents preferred to y?
+    // parents either in the multimethod's hierarchy or thru 
+    // Class.isAssignableFrom
+    for (ISeq ps = RT.seq(parents.invoke(x)); 
+      ps != null;
+      ps = ps.next()) {
+      if (prefers(ps.first(),y)) { return true; } }
+
+    return false; }
+
+  //--------------------------------------------------------------
+
   @Override
   public MultiFn preferMethod (final Object dispatchX,
                                final Object dispatchY) {
@@ -173,20 +214,6 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
       resetCache();
       return this; }
     finally { rw.writeLock().unlock(); } }
-
-  private boolean prefers (final Object x, 
-                           final Object y) {
-    final Set xprefs = (Set) preferTable.get(x);
-    if ((xprefs != null) && xprefs.contains(y)) { return true; }
-    for (ISeq ps = RT.seq(parents.invoke(y)); 
-      ps != null;
-      ps = ps.next()) {
-      if (prefers(x,ps.first())) { return true; } }
-    for (ISeq ps = RT.seq(parents.invoke(x)); 
-      ps != null;
-      ps = ps.next()) {
-      if (prefers(ps.first(),y)) { return true; } }
-    return false; }
 
   //--------------------------------------------------------------
   /** See clojure.core/isa?

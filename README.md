@@ -54,6 +54,8 @@ See also:
 It is possible that performance improvements to the
 Clojure collections would make this little library unnecessary.
 
+See also https://michael.steindorfer.name/publications/phd-thesis-efficient-immutable-collections.pdf.
+
     **TODO:** check for behavior differences between `Map.get(k)`
     and `ILookup.valAt(k)`, especially with `Named` and `IPersistentVector`
     keys.

@@ -2,66 +2,119 @@
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
 (ns faster.multimethods.test.prefer
-  {:doc "Check prefer-method"
+  {:doc "Check MultiFn.prefers(x,y), prefer-method, etc."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-08-12"
-   :version "2017-08-12"}
+   :version "2017-08-14"}
   (:require [clojure.test :as test]
             [faster.multimethods.core :as fmc]))
 ;; mvn clojure:test -Dtest=faster.multimethods.test.prefer
 ;;----------------------------------------------------------------
-(test/deftest fmc-prefers-with-local-hierarchy
-  (def fmc-hierarchy 
-    (let [h (make-hierarchy)
-          h (derive h ::c0 ::b0)
-          h (derive h ::d0 ::c0)
-          h (derive h ::d0 ::a0)]
-      h))
-  (fmc/defmulti fmc identity :hierarchy #'fmc-hierarchy)
-  (fmc/defmethod fmc ::a0 [x] [::a0 x]) 
-  (fmc/defmethod fmc ::c0 [x] [::c0 x]) 
-  (fmc/prefer-method fmc ::b0 ::a0)
-  (test/is (= [::c0 ::d0] (fmc ::d0))))
+;; prefer-method transitivity bug
 ;;----------------------------------------------------------------
-(test/deftest MultiFn-prefers-bug-with-local-hierarchy
-  (def bug-hierarchy 
-    (let [h (make-hierarchy)
-          h (derive h ::c0 ::b0)
-          h (derive h ::d0 ::c0)
-          h (derive h ::d0 ::a0)]
-      h))
-  (defmulti bug identity :hierarchy #'bug-hierarchy)
-  (defmethod bug ::a0 [x] [::a0 x]) 
-  (defmethod bug ::c0 [x] [::c0 x]) 
-  (prefer-method bug ::b0 ::a0)
+(test/deftest transitivity
+  
+  (derive ::transitive-d ::transitive-a)
+  (derive ::transitive-d ::transitive-c)
+  
+  (defmulti transitive identity)
+  (defmethod transitive ::transitive-a [x] [::transitive-a x]) 
+  (defmethod transitive ::transitive-c [x] [::transitive-c x]) 
+  (prefer-method transitive ::transitive-a ::transitive-b)
+  (prefer-method transitive ::transitive-b ::transitive-c)
+  ;; this should not throw an exception
   (test/is 
+    #_(= [::transitive-a ::transitive-d] 
+         (transitive ::transitive-d))
     (thrown-with-msg? 
       IllegalArgumentException 
       #"Multiple methods in multimethod"
-      (= [::c0 ::d0] (bug ::d0)))))
+      (= [::transitive-a ::transitive-d] 
+         (transitive ::transitive-d))))
+  
+  (fmc/defmulti fmc-transitive identity)
+  (fmc/defmethod fmc-transitive ::transitive-a [x] [::transitive-a x]) 
+  (fmc/defmethod fmc-transitive ::transitive-c [x] [::transitive-c x]) 
+  (fmc/prefer-method fmc-transitive ::transitive-a ::transitive-b)
+  (fmc/prefer-method fmc-transitive ::transitive-b ::transitive-c)
+  (test/is (= [::transitive-a ::transitive-d] 
+              (fmc-transitive ::transitive-d))))
 ;;----------------------------------------------------------------
-; fails with Clojure 1.8.0
-#_(test/deftest MultiFn-prefers-with-local-hierarchy
-  (def local-hierarchy 
-    (let [h (make-hierarchy)
-          h (derive h ::c0 ::b0)
-          h (derive h ::d0 ::c0)
-          h (derive h ::d0 ::a0)]
-      h))
-  (defmulti local identity :hierarchy #'local-hierarchy)
-  (defmethod local ::a0 [x] [::a0 x]) 
-  (defmethod local ::c0 [x] [::c0 x]) 
-  (prefer-method local ::b0 ::a0)
-  (test/is (= [::c0 ::d0] (local ::d0))))
+;; (prefers x ancestor-of-y) wrongly implies (prefers x y)
 ;;----------------------------------------------------------------
-(test/deftest MultiFn-prefers-with-global-hierarchy
-  (derive ::c1 ::b1)
-  (derive ::d1 ::c1)
-  (derive ::d1 ::a1)
+(test/deftest inheritance
+  (derive ::pi-b ::pi-a)
+  (derive ::pi-e ::pi-d)
+  (derive ::pi-c ::pi-b)
+  (derive ::pi-c ::pi-e)
+  
+  (defmulti cpi identity)
+  (defmethod cpi ::pi-b [x] [::pi-b x]) 
+  (defmethod cpi ::pi-e [x] [::pi-e x]) 
+  (prefer-method cpi ::pi-b ::pi-d)
+  ;; This should throw the exception
+  (test/is 
+    (= [::pi-b ::pi-c] (cpi ::pi-c))
+    #_(thrown-with-msg? 
+        IllegalArgumentException 
+        #"Multiple methods in multimethod"
+        (= [::pi-b ::pi-c] (fpi ::pi-c))))
+  
+  (fmc/defmulti fpi identity)
+  (fmc/defmethod fpi ::pi-b [x] [::pi-b x]) 
+  (fmc/defmethod fpi ::pi-e [x] [::pi-e x]) 
+  (fmc/prefer-method fpi ::pi-b ::pi-d)
+  ;; This should throw the exception
+  (test/is 
+    #_(= [::pi-b ::pi-c] (fpi ::pi-c))
+    (thrown-with-msg? 
+      IllegalArgumentException 
+      #"Multiple methods in multimethod"
+      (= [::pi-b ::pi-c] (fpi ::pi-c)))))
+;;----------------------------------------------------------------
+;; local vs global hierarchy consistency
+;;----------------------------------------------------------------
+(test/deftest prefers-global
+  (derive ::global-c ::global-b)
+  (derive ::global-d ::global-c)
+  (derive ::global-d ::global-a)
+  
   (defmulti global identity)
-  (defmethod global ::a1 [x] [::a1 x]) 
-  (defmethod global ::c1 [x] [::c1 x]) 
-  (prefer-method global ::b1 ::a1)
-  (global ::d1)
-  (test/is (= [::c1 ::d1] (global ::d1))))
+  (defmethod global ::global-a [x] [::global-a x])
+  (defmethod global ::global-c [x] [::global-c x]) 
+  (prefer-method global ::global-b ::global-a)
+  (test/is (= [::global-c ::global-d] (global ::global-d)))
+  
+  (fmc/defmulti fmc-global identity)
+    (fmc/defmethod fmc-global ::global-a [x] [::global-a x]) 
+    (fmc/defmethod fmc-global ::global-c [x] [::global-c x]) 
+    (fmc/prefer-method fmc-global ::global-b ::global-a)
+    (test/is (= [::global-c ::global-d] (fmc-global ::global-d))))
+;;----------------------------------------------------------------
+(test/deftest prefers-local
+  (def hierarchy 
+    (let [h (make-hierarchy)
+          h (derive h ::local-c ::local-b)
+          h (derive h ::local-d ::local-c)
+          h (derive h ::local-d ::local-a)]
+      h))
+  
+  (defmulti local identity :hierarchy #'hierarchy)
+    (defmethod local ::local-a [x] [::local-a x]) 
+    (defmethod local ::local-c [x] [::local-c x]) 
+    (prefer-method local ::local-b ::local-a)
+    ;; this should not throw the exception
+    (test/is 
+      #_(= [::local-c ::local-d] (local ::local-d))
+      (thrown-with-msg? 
+        IllegalArgumentException 
+        #"Multiple methods in multimethod"
+        (= [::local-c ::local-d] (local ::local-d))))
+    
+    (fmc/defmulti fmc-local identity :hierarchy #'hierarchy)
+    (fmc/defmethod fmc-local ::local-a [x] [::local-a x]) 
+    (fmc/defmethod fmc-local ::local-c [x] [::local-c x]) 
+    (fmc/prefer-method fmc-local ::local-b ::local-a)
+    (test/is (= [::local-c ::local-d] (fmc-local ::local-d))))
+;;----------------------------------------------------------------
 ;;----------------------------------------------------------------
