@@ -2,7 +2,7 @@ package faster.multimethods.java.signature;
 
 /** Utilities for signatures.
  *
- * @author mcdonald dot john dot alan at gmail dot com
+ * @author palisades dot lakes at gmail dot com
  * @since 2017-06-05
  * @version 2017-06-09
  */
