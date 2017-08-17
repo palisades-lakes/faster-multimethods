@@ -112,7 +112,7 @@ See also https://michael.steindorfer.name/publications/phd-thesis-efficient-immu
     no Symbols or Keywords, no arbitrary hierarchy, and no
     recursion.
     
-4. Permit a `:hierarchy false` option to `defmulti`.
+4. Permit a `:hierarchy false` option to `defmulti`..
 
     Method lookup overhead is then about 8% of Clojure 1.8.0.
     
