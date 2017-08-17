@@ -190,7 +190,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
 
   private static final Var parents = RT.var("clojure.core","parents");
 
-  private boolean prefers (final Map hierarchy,
+  private boolean prefers (final Map hierarky,
                            final Object x, 
                            final Object y) {
 
@@ -203,15 +203,15 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
       // transitive closure of prefer-method relation
       // is x preferred to anything that is preferred to y?
       for (final Object xx : xprefs) {
-        if (prefers(hierarchy,xx,y)) { return true; } } }
+        if (prefers(hierarky,xx,y)) { return true; } } }
 
     // are any of x's parents preferred to y?
     // parents either in the multimethod's hierarchy or thru 
     // Class.isAssignableFrom
-    for (ISeq ps = RT.seq(parents.invoke(hierarchy,x)); 
+    for (ISeq ps = RT.seq(parents.invoke(hierarky,x)); 
       ps != null;
       ps = ps.next()) {
-      if (prefers(hierarchy,ps.first(),y)) { return true; } }
+      if (prefers(hierarky,ps.first(),y)) { return true; } }
 
     return false; }
 
@@ -318,10 +318,10 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
 
   //--------------------------------------------------------------
 
-  private boolean dominates (final Map hierarchy,
+  private boolean dominates (final Map hierarky,
                              final Object x, 
                              final Object y) {
-    return prefers(hierarchy,x,y) || isA(hierarchy,x,y); }
+    return prefers(hierarky,x,y) || isA(hierarky,x,y); }
 
   //--------------------------------------------------------------
 
@@ -338,7 +338,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
     Object bestValue;
     final Map mt = methodTable;
     final Map pt = preferTable;
-    final Map ch = (Map) cachedHierarchy;
+    final Map ch = cachedHierarchy;
     try {
       Map.Entry bestEntry = null;
       for (final Object o : methodTable.entrySet()) {
