@@ -1,4 +1,5 @@
 src/main/java/* linguist-vendored
 src/test/java/* linguist-vendored
 * text=auto eol=lf
-*.bat eol=crlf
+*.bat text eol=crlf
+*.png -text
