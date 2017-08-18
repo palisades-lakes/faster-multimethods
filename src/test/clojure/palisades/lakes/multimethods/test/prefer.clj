@@ -5,12 +5,12 @@
   {:doc "Check MultiFn.prefers(x,y), prefer-method, etc."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-08-12"
-   :version "2017-08-14"}
+   :version "2017-08-18"}
   (:require [clojure.test :as test]
             [palisades.lakes.multimethods.core :as fmc]))
 ;; mvn clojure:test -Dtest=palisades.lakes.multimethods.test.prefer
 ;;----------------------------------------------------------------
-;; prefer-method transitivity bug
+;; prefer-method transitivity bugs
 ;;----------------------------------------------------------------
 (test/deftest transitivity
   
@@ -39,6 +39,60 @@
   (fmc/prefer-method fmc-transitive ::transitive-b ::transitive-c)
   (test/is (= [::transitive-a ::transitive-d] 
               (fmc-transitive ::transitive-d))))
+
+(test/deftest transitivity2
+  
+  (derive ::transitive-c0 ::transitive-a0)
+  (derive ::transitive-c1 ::transitive-a1)
+  (derive ::transitive-d0 ::transitive-c0)
+  (derive ::transitive-d1 ::transitive-c1)
+  (derive ::transitive-d0 ::transitive-b0)
+  (derive ::transitive-d1 ::transitive-b1)
+  
+  (defmulti transitive2 (fn [x0 x1] [x0 x1]))
+  (defmethod transitive2 
+    [::transitive-b0 ::transitive-b1]
+    [x0 x1] 
+    [[::transitive-b0 ::transitive-b1] [x0 x1]]) 
+  (defmethod transitive2 
+    [::transitive-c0 ::transitive-c1]
+    [x0 x1] 
+    [[::transitive-c0 ::transitive-c1] [x0 x1]]) 
+  (prefer-method transitive2 
+                 [::transitive-a0 ::transitive-a1]
+                 [::transitive-b0 ::transitive-b1])
+  
+  ;; this should not throw an exception
+  (test/is 
+    #_(= [[::transitive-c0 ::transitive-c1] 
+          [::transitive-d0 ::transitive-d1]] 
+         (transitive2 ::transitive-d0 ::transitive-d1))
+    (thrown-with-msg? 
+      IllegalArgumentException 
+      #"Multiple methods in multimethod"
+      (= [[::transitive-c0 ::transitive-c1] 
+          [::transitive-d0 ::transitive-d1]] 
+         (transitive2 ::transitive-d0 ::transitive-d1))))
+  ;;--------------------------------------------------------------
+  (fmc/defmulti fmc-transitive2 (fn [x0 x1] [x0 x1]))
+  (fmc/defmethod fmc-transitive2 
+    [::transitive-b0 ::transitive-b1]
+    [x0 x1] 
+    [[::transitive-b0 ::transitive-b1] [x0 x1]]) 
+  (fmc/defmethod fmc-transitive2 
+    [::transitive-c0 ::transitive-c1]
+    [x0 x1] 
+    [[::transitive-c0 ::transitive-c1] [x0 x1]]) 
+  (fmc/prefer-method fmc-transitive2 
+                     [::transitive-a0 ::transitive-a1]
+                     [::transitive-b0 ::transitive-b1])
+  
+  ;; this should not throw an exception
+  (test/is 
+    (= [[::transitive-c0 ::transitive-c1] 
+        [::transitive-d0 ::transitive-d1]] 
+       (fmc-transitive2 ::transitive-d0 ::transitive-d1))))
+
 ;;----------------------------------------------------------------
 ;; (prefers x ancestor-of-y) wrongly implies (prefers x y)
 ;;----------------------------------------------------------------

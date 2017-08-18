@@ -208,7 +208,7 @@ Most general:
  ...
  ``` 
   
-## Acknowledgements
+## Acknowledgments
 
 ### ![Yourkit](https://www.yourkit.com/images/yklogo.png)
 

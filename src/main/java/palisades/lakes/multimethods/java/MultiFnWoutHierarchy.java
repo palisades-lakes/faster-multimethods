@@ -177,7 +177,7 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   private boolean prefers (final Object x, 
                            final Object y) {
     final Set xprefs = (Set) preferTable.get(x);
- 
+
     if (xprefs != null) {
       // is there an explicit prefer-method entry for (x,y)?
       if (xprefs.contains(y)) { return true; }
@@ -185,6 +185,16 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
       // is x preferred to anything that is preferred to y?
       for (final Object xx : xprefs) {
         if (prefers(xx,y)) { return true; } } }
+
+    // For multi-arity dispatch functions, we need to check the
+    // keys of the preferTable.
+    // TODO: does this make the next loop unnecessary?
+    for (final Object k : preferTable.keySet()) {
+      if ((!x.equals(k)) 
+        && isA(x,k) 
+        && prefers(k,y)) { 
+        return true; } }
+
 
     // are any of x's parents preferred to y?
     // parents either in the multimethod's hierarchy or thru 

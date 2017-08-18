@@ -195,15 +195,25 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
 
     final Set xprefs = (Set) preferTable.get(x);
     if (xprefs != null) {
-    
+
       // is there an explicit prefer-method entry for (x,y)?
       if (xprefs.contains(y)) { return true; }
-      
+
       // transitive closure of prefer-method relation
       // is x preferred to anything that is preferred to y?
       for (final Object xx : xprefs) {
         if (prefers(hierarky,xx,y)) { return true; } } }
 
+    // For multi-arity dispatch functions, we need to check the
+    // keys of the preferTable.
+    // TODO: does this make the next loop unnecessary?
+    for (final Object k : preferTable.keySet()) {
+      if ((!x.equals(k)) 
+        && isA(hierarky,x,k) 
+        && prefers(hierarky,k,y)) {
+        return true; } }
+
+    // Note: this only works for atomic dispatch values
     // are any of x's parents preferred to y?
     // parents either in the multimethod's hierarchy or thru 
     // Class.isAssignableFrom
