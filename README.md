@@ -1,4 +1,4 @@
-# faster-multimethods
+# faster-multimethods [![Clojars Project](https://img.shields.io/clojars/v/palisades-lakes/faster-multimethods.svg)](https://clojars.org/palisades-lakes/faster-multimethods)
 
 Backwards compatible alternative to the 
 Clojure 1.8.0 implementation of generic functions (aka multimethods)
