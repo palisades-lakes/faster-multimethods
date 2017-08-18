@@ -8,7 +8,7 @@
 
 ; Author: Frantisek Sodomka, Robert Lachlan
 
-(ns faster.multimethods.test.core
+(ns palisades.lakes.multimethods.test.core
     
   {:doc "Fork of Clojure 1.8.0 multimthod unit tests.
          TODO: no hierarchy tests."
@@ -21,7 +21,7 @@
                             get-method prefers])
   
   (:use clojure.test 
-        faster.multimethods.core)
+        palisades.lakes.multimethods.core)
   
   (:require [clojure.set :as set]))
 ;;----------------------------------------------------------------
@@ -136,7 +136,7 @@
   (testing "a tag cannot be its own ancestor"
            (is (thrown-with-msg? 
                  Throwable 
-                 #"Cyclic derivation: :faster.multimethods.test.core/child has :faster.multimethods.test.core/ancestor-1 as ancestor"
+                 #"Cyclic derivation: :palisades.lakes.multimethods.test.core/child has :palisades.lakes.multimethods.test.core/ancestor-1 as ancestor"
                  (derive family ::ancestor-1 ::child)))))
 
 (deftest using-diamond-inheritance

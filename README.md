@@ -169,7 +169,7 @@ Leiningen/Boot
 Fastest:
 
 ```
-(require `[faster.multimethods.core :as fmc])
+(require `[palisades.lakes.multimethods.core :as fmc])
 
 (fmc/defmulti intersects?
   "Test for general set intersection."
@@ -191,7 +191,7 @@ Fastest:
 Most general:
 
 ```
-(require `[faster.multimethods.core :as fmc])
+(require `[palisades.lakes.multimethods.core :as fmc])
 
 (fmc/defmulti intersects?
   "Test for general set intersection."

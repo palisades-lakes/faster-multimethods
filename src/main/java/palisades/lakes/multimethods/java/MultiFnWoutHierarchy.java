@@ -12,7 +12,7 @@
 
 /* rich Sep 13, 2007 */
 
-package faster.multimethods.java;
+package palisades.lakes.multimethods.java;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,8 +31,7 @@ import clojure.lang.PersistentHashSet;
 import clojure.lang.RT;
 import clojure.lang.Util;
 import clojure.lang.Var;
-
-import faster.multimethods.java.signature.Signature;
+import palisades.lakes.multimethods.java.signature.Signature;
 
 /** Semantic changes to clojure.lang.MultiFn.
  * 

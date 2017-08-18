@@ -149,13 +149,13 @@
     <configuration>
      <clojureOptions>-Dclojure.compiler.direct-linking=true</clojureOptions>
      <namespaces>
-      <namespace>!faster.multimethods.doc.*</namespace>
+      <namespace>!palisades.lakes.multimethods.doc.*</namespace>
      </namespaces>
      <copiedNamespaces>
       <namespace>!.*</namespace>
      </copiedNamespaces>
      <testNamespaces>
-      <namespace>faster.multimethods.test.*</namespace>
+      <namespace>palisades.lakes.multimethods.test.*</namespace>
      </testNamespaces>
     </configuration>
    </plugin>

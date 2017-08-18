@@ -1,14 +1,14 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-(ns faster.multimethods.test.prefer
+(ns palisades.lakes.multimethods.test.prefer
   {:doc "Check MultiFn.prefers(x,y), prefer-method, etc."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-08-12"
    :version "2017-08-14"}
   (:require [clojure.test :as test]
-            [faster.multimethods.core :as fmc]))
-;; mvn clojure:test -Dtest=faster.multimethods.test.prefer
+            [palisades.lakes.multimethods.core :as fmc]))
+;; mvn clojure:test -Dtest=palisades.lakes.multimethods.test.prefer
 ;;----------------------------------------------------------------
 ;; prefer-method transitivity bug
 ;;----------------------------------------------------------------

@@ -1,7 +1,7 @@
 (set! *warn-on-reflection* false)
 (set! *unchecked-math* false)
 ;;----------------------------------------------------------------
-(ns faster.multimethods.codox
+(ns palisades.lakes.multimethods.codox
   
   {:doc "Generate codox for faster-multimethods."
    :author "palisades dot lakes at gmail dot com"

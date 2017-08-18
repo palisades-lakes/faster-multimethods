@@ -1,4 +1,4 @@
-package faster.multimethods.java;
+package palisades.lakes.multimethods.java;
 
 import clojure.lang.IFn;
 import clojure.lang.IPersistentMap;
