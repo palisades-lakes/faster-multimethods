@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project
+ xmlns="http://maven.apache.org/POM/4.0.0"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
  <modelVersion>4.0.0</modelVersion>
  <properties>
   <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -74,22 +78,10 @@
           <ignore />
          </action>
         </pluginExecution>
-        <!--         <pluginExecution>
-         <pluginExecutionFilter>
-          <groupId>com.theoryinpractise</groupId>
-          <artifactId>clojure-maven-plugin</artifactId>
-          <versionRange>[${clojure-maven-version},)</versionRange>
-          <goals>
-           <goal>compile</goal>
-           <goal>test</goal>
-          </goals>
-         </pluginExecutionFilter>
-         <action>
-          <ignore />
-         </action>
-        </pluginExecution>
-         -->
-        
+        <!-- <pluginExecution> <pluginExecutionFilter> <groupId>com.theoryinpractise</groupId> 
+         <artifactId>clojure-maven-plugin</artifactId> <versionRange>[${clojure-maven-version},)</versionRange> 
+         <goals> <goal>compile</goal> <goal>test</goal> </goals> </pluginExecutionFilter> 
+         <action> <ignore /> </action> </pluginExecution> -->
        </pluginExecutions>
       </lifecycleMappingMetadata>
      </configuration>

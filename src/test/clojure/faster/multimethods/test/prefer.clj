@@ -86,10 +86,10 @@
   (test/is (= [::global-c ::global-d] (global ::global-d)))
   
   (fmc/defmulti fmc-global identity)
-    (fmc/defmethod fmc-global ::global-a [x] [::global-a x]) 
-    (fmc/defmethod fmc-global ::global-c [x] [::global-c x]) 
-    (fmc/prefer-method fmc-global ::global-b ::global-a)
-    (test/is (= [::global-c ::global-d] (fmc-global ::global-d))))
+  (fmc/defmethod fmc-global ::global-a [x] [::global-a x]) 
+  (fmc/defmethod fmc-global ::global-c [x] [::global-c x]) 
+  (fmc/prefer-method fmc-global ::global-b ::global-a)
+  (test/is (= [::global-c ::global-d] (fmc-global ::global-d))))
 ;;----------------------------------------------------------------
 (test/deftest prefers-local
   (def hierarchy 
@@ -100,21 +100,21 @@
       h))
   
   (defmulti local identity :hierarchy #'hierarchy)
-    (defmethod local ::local-a [x] [::local-a x]) 
-    (defmethod local ::local-c [x] [::local-c x]) 
-    (prefer-method local ::local-b ::local-a)
-    ;; this should not throw the exception
-    (test/is 
-      #_(= [::local-c ::local-d] (local ::local-d))
-      (thrown-with-msg? 
-        IllegalArgumentException 
-        #"Multiple methods in multimethod"
-        (= [::local-c ::local-d] (local ::local-d))))
-    
-    (fmc/defmulti fmc-local identity :hierarchy #'hierarchy)
-    (fmc/defmethod fmc-local ::local-a [x] [::local-a x]) 
-    (fmc/defmethod fmc-local ::local-c [x] [::local-c x]) 
-    (fmc/prefer-method fmc-local ::local-b ::local-a)
-    (test/is (= [::local-c ::local-d] (fmc-local ::local-d))))
+  (defmethod local ::local-a [x] [::local-a x]) 
+  (defmethod local ::local-c [x] [::local-c x]) 
+  (prefer-method local ::local-b ::local-a)
+  ;; this should not throw the exception
+  (test/is 
+    #_(= [::local-c ::local-d] (local ::local-d))
+    (thrown-with-msg? 
+      IllegalArgumentException 
+      #"Multiple methods in multimethod"
+      (= [::local-c ::local-d] (local ::local-d))))
+  
+  (fmc/defmulti fmc-local identity :hierarchy #'hierarchy)
+  (fmc/defmethod fmc-local ::local-a [x] [::local-a x]) 
+  (fmc/defmethod fmc-local ::local-c [x] [::local-c x]) 
+  (fmc/prefer-method fmc-local ::local-b ::local-a)
+  (test/is (= [::local-c ::local-d] (fmc-local ::local-d))))
 ;;----------------------------------------------------------------
 ;;----------------------------------------------------------------
