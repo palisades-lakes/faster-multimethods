@@ -73,7 +73,7 @@ import palisades.lakes.multimethods.java.signature.Signature;
  *
  * @author palisades dot lakes at gmail dot com
  * @since 2017-06-20
- * @version 2017-08-14
+ * @version 2017-08-23
  */
 @SuppressWarnings("unchecked")
 public final class MultiFnWithHierarchy extends AFn implements MultiFn {
@@ -95,12 +95,16 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
                                final Object defaultd, 
                                final IRef hierarky) {
     rw = new ReentrantReadWriteLock();
+    assert (null != n) && (! n.isEmpty());
     name = n;
+    assert null != dispatchF;
     dispatchFn = dispatchF;
     methodTable = Collections.emptyMap();
     methodCache = Collections.emptyMap();
     preferTable = Collections.emptyMap();
+    // can be null?
     defaultDispatch = defaultd;
+    assert null != hierarky;
     hierarchy = hierarky;
     cachedHierarchy = null; }
 
