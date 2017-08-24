@@ -6,7 +6,7 @@
   {:doc "Faster multimethod method lookup."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-06-02"
-   :version "2017-08-05"}
+   :version "2017-08-23"}
   (:refer-clojure :exclude [defmulti defmethod remove-all-methods
                             remove-method prefer-method methods
                             get-method prefers]))
@@ -153,7 +153,7 @@
   [multifn dispatch-val & fn-tail]
   
   `(.addMethod ~(with-meta multifn {:tag 'palisades.lakes.multimethods.java.MultiFn}) 
-     ~dispatch-val (fn ~@fn-tail)))
+     ~dispatch-val (fn ~multifn ~@fn-tail)))
 
 (defn remove-all-methods
   "Removes all of the methods of multimethod.
