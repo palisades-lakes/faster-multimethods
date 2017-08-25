@@ -5,7 +5,7 @@
   {:doc "Check MultiFn.prefers(x,y), prefer-method, etc."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-08-12"
-   :version "2017-08-18"}
+   :version "2017-08-25"}
   (:require [clojure.test :as test]
             [palisades.lakes.multimethods.core :as fmc]))
 ;; mvn clojure:test -Dtest=palisades.lakes.multimethods.test.prefer
@@ -49,7 +49,8 @@
   (derive ::transitive-d0 ::transitive-b0)
   (derive ::transitive-d1 ::transitive-b1)
   
-  (defmulti transitive2 (fn [x0 x1] [x0 x1]))
+  (defmulti transitive2 
+    (fn transitive2-dispatch [x0 x1] [x0 x1]))
   (defmethod transitive2 
     [::transitive-b0 ::transitive-b1]
     [x0 x1] 
@@ -74,7 +75,8 @@
           [::transitive-d0 ::transitive-d1]] 
          (transitive2 ::transitive-d0 ::transitive-d1))))
   ;;--------------------------------------------------------------
-  (fmc/defmulti fmc-transitive2 (fn [x0 x1] [x0 x1]))
+  (fmc/defmulti fmc-transitive2 
+    (fn fmc-transtive-dispatch [x0 x1] [x0 x1]))
   (fmc/defmethod fmc-transitive2 
     [::transitive-b0 ::transitive-b1]
     [x0 x1] 

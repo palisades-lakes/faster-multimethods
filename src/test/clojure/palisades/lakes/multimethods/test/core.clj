@@ -14,7 +14,7 @@
          TODO: no hierarchy tests."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-07-27"
-   :version "2017-07-27"}
+   :version "2017-08-25"}
 
   (:refer-clojure :exclude [defmulti defmethod remove-all-methods
                             remove-method prefer-method methods
@@ -30,12 +30,13 @@
 (defn set-var-roots
   [maplike]
   (doseq [[var val] maplike]
-    (alter-var-root var (fn [_] val))))
+    (alter-var-root var (fn alter-var-from-map [_] val))))
 
 (defn with-var-roots*
   "Temporarily set var roots, run block, then put original roots back."
   [root-map f & args]
-  (let [originals (doall (map (fn [[var _]] [var @var]) root-map))]
+  (let [originals (mapv (fn save-old-vals [[var _]] [var @var])
+                       root-map)]
     (set-var-roots root-map)
     (try
      (apply f args)
@@ -44,7 +45,7 @@
 
 (defmacro with-var-roots
   [root-map & body]
-  `(with-var-roots* ~root-map (fn [] ~@body)))
+  `(with-var-roots* ~root-map (fn call-body [] ~@body)))
 ;;----------------------------------------------------------------
 ; http://clojure.org/multimethods
 
@@ -226,7 +227,7 @@
   (testing "Multiple method match dispatch error is caught"
            ;; Example from the multimethod docs.
            (derive ::rect ::shape)
-           (defmulti bar (fn [x y] [x y]))
+           (defmulti bar (fn bar-dispatch [x y] [x y]))
            (defmethod bar [::rect ::shape] [x y] :rect-shape)
            (defmethod bar [::shape ::rect] [x y] :shape-rect)
            (is (thrown? java.lang.IllegalArgumentException
