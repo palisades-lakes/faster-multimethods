@@ -65,7 +65,7 @@ import palisades.lakes.multimethods.java.signature.Signature;
  *
  * @author palisades dot lakes at gmail dot com
  * @since 2017-06-20
- * @version 2017-08-23
+ * @version 2017-09-01
  */
 @SuppressWarnings("unchecked")
 public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
@@ -75,7 +75,7 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   private final ReentrantReadWriteLock rw;
   private volatile Map methodTable;
   private volatile Map preferTable;
-  private Map methodCache;
+  private volatile Map methodCache;
 
   //--------------------------------------------------------------
 
