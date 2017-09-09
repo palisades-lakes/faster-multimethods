@@ -3,13 +3,27 @@
 Backwards compatible alternative to the 
 Clojure 1.8.0 implementation of generic functions (aka multimethods)
 via  `defmulti`/`defmethod`/`MultiFn`.
-Roughly 1/10 the cost for method lookup
-(see [multimethod-experiments]() for benchmark details).
 
+Very roughly 1/10 the cost for method lookup of Clojure 1.8.0,
+and comparable in performance to `defprotocol` while being
+fully dynamic,
+See 
+[multimethod-experiments](https://github.com/palisades-lakes/multimethod-experiments)
+for benchmark details.
+
+Runtimes for various dynamic method lookup algorithms. 
+`hashmaps`, `signatures`, and `nohierarchy` are available from
+`faster-multimethods`.
+
+![faster-multimethods vs Clojure 1.8.0](docs/figs/dynamic-multi.quantiles.png)
+
+Overhead, taking a hand optimized Java if-then-else `instanceof`
+algorithm as the baseline, as a fraction of the overhead of
+Clojure 1.8.0 `defmulti`:
+
+![faster-multimethods vs Clojure 1.8.0](docs/figs/dynamic-multi-overhead.quantiles.png)
 
 ## Changes from Clojure 1.8.0
-
-![faster-multimethods vs Clojure 1.8.0](docs/figs/bench-plus-defmulti.overhead.png)
 
 The main differences from the Clojure 1.8.0 implementation:
 
@@ -18,18 +32,8 @@ The main differences from the Clojure 1.8.0 implementation:
 replace 
 [`PersistentHashMap`](https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/PersistentHashMap.java)
 with 
-[`java.util.HashMap`](https://docs.oracle.com/javase/8/docs/api/java/util/HashMap.html),
-for the `methodTable` (maps dispatch values to a defined methods),
-`preferTable` (resolves multiple applicable defined methods),
-and `methodCache` (maps an actual dispatch value 
-to the resolved applicable method).
-
-    Method lookup overhead, relative to a hand-written Java 
-    if-then-else, is about 14% of Clojure 1.8.0. This is for a
-    benchmark testing for intersection of numerical sets, 1 of 9 
-    methods called at random. See 
-    [multimethod-experiments](https://github.com/palisades-lakes/multimethod-experiments) for 
-    more details
+[`java.util.HashMap`](https://docs.oracle.com/javase/8/docs/api/java/util/HashMap.html)
+(`hashmaps` in the plots).
 
     The HashMaps here are treated as immutable, so their behavior
 is functionally equivalent. 
@@ -54,99 +58,34 @@ See also:
 It is possible that performance improvements to the
 Clojure collections would make this little library unnecessary.
 
-See also https://michael.steindorfer.name/publications/phd-thesis-efficient-immutable-collections.pdf.
-
-    **TODO:** check for behavior differences between `Map.get(k)`
-    and `ILookup.valAt(k)`, especially with `Named` and `IPersistentVector`
-    keys.
-
-2. Make the `methodCache` non-volatile. 
-
-    Method lookup overhead for this benchmark is also about 14% 
-    of Clojure 1.8.0.
-    
-    This change may cause redundant cache updates, but I believe
-    that's sufficiently low probability to not affect any
-    performance gain, and, in any case, the cache should converge
-    quickly to a stable state.
-    
-    If my reasoning about this is wrong, I'd like to know.
-    Since it doesn't actually improve this particular benchmark
-    I may revert this anyway.
-    
-3. Support more efficient dispatch values.  
+2. Permit more efficient dispatch values (`signatures` in the plots).
 
     I've chosen to add support for an additional special case of
     dispatch values,
     which I call Signatures --- essentially short lists of Classes.
     
-    Method lookup overhead is then about 11% of Clojure 1.8.0.
-    
     This is backwards compatible; and can be adopted by changing
     the dispatch function from, eg, `[(class a) (class b)]` to
     `(signature a b)`.
     
-    The Clojure documentation is not very clear about what are
-    and aren't legal dispatch values. Examining the source
-    (in particular, 
-    [clojure.core/isa?](https://github.com/clojure/clojure/blob/master/src/clj/clojure/core.clj#L5468)) 
-    shows that legal dispatch values are Classes, and instances
-    of `clojure.lang.Named` (ie Symbols and Keywords),
-    and, recursively, IPersistentVectors containing legal dispatch
-    values.
-    
-    As in (1), we could permit any List of dispatch values as a 
-    dispatch value. However, because dispatch values are used
-    as keys in Maps, permitting mutable Lists would be expecting
-    a high degree of discipline,
-    not only from this library's developers, but from its' users
-    as well.
-    
-    As above, I could implement more efficient immutable lists
-    internally, or import them from some external dependency,
-    but, as above, that's likely better left to more general
-    improvement of Clojure collections.
-    
-    What I've chosen to do here is add support for what I believe
-    is an important special case: short immutable lists of Classes:
-    no Symbols or Keywords, no arbitrary hierarchy, and no
-    recursion.
-    
-4. Permit a `:hierarchy false` option to `defmulti`..
+4. Permit a `:hierarchy false` option to `defmulti`
+(`nohierarchy` in the plots).
 
-    Method lookup overhead is then about 8% of Clojure 1.8.0.
-    
     Every multimethod (instance of MultiFn) contains a reference
-    to a `hierarchy`, which provides
-    a partial ordering of dispatch values thru a directed acyclic
-    graph whose nodes are atomic dispatch values (Named,
-    and Classes). The graph includes implied edges 
-    from the `isAssignableFrom` Class graph as well as explicit
-    edges added using `derive`.
-    
-    Because the hierarchy can modified at any time, each MultiFn
-    has a reference to a shared mutable object, whose state must
+    to a `Var` holding a `hierarchy`. This shared mutable state must
     be checked for changes every time a multimethod is called.
     
-    However, an important special case is one where only Classes
-    are used as atomic dispatch values. In this case, the hierarchy
+    An important special case is one where only classes,
+    and sequences of classes
+    are used as dispatch values. In this case, the hierarchy
     is irrelevant. 
     
     Removing the need for synchronizing with the `hierarchy`,
-    reduces the overhead by 3 percentage points 
-    (relative to Clojure 1.8.0) and by about 25 percent relative 
-    to stage 3.
-    
-    TODO: would allowing for pure `Named` hierarchy dispatch
-    (no classes) have similar performance benefits?
-    
+    further reduces the overhead.
     
 ## Usage
 
 ### Dependency 
-
-Available from 
-[Clojars](https://clojars.org/palisades-lakes/faster-multimethods):
 
 Maven:
 
