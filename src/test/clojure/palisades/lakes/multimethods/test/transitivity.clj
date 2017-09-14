@@ -84,5 +84,5 @@
     (thrown-with-msg? 
       IllegalArgumentException 
       #"Multiple methods in multimethod"
-      (= [B2 C2] (cpi (C2.))))))
+      (= [B2 C2] (fpi (C2.))))))
 ;;----------------------------------------------------------------
