@@ -178,6 +178,7 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
 
   private boolean prefers (final Object x, 
                            final Object y) {
+    
     final Set xprefs = (Set) preferTable.get(x);
 
     if (xprefs != null) {
@@ -196,7 +197,6 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
         && isA(x,k) 
         && prefers(k,y)) { 
         return true; } }
-
 
     // are any of x's parents preferred to y?
     // parents either in the multimethod's hierarchy or thru 

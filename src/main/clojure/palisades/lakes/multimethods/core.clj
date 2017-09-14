@@ -284,5 +284,4 @@
   ([x0 x1 x2 & xs] 
     `(SignatureN/extract 
        ~x0 ~x1 ~x2 ~with-meta xs {:tag 'clojure.lang.ArraySeq})))
-
 ;;----------------------------------------------------------------

@@ -3,7 +3,8 @@
 ;;----------------------------------------------------------------
 (ns palisades.lakes.multimethods.test.transitivity
   
-  {:doc "dummy classes for prefer-method tests."
+  {:doc "prefers transitivity issues in Clojure 1.8.0,
+         with class-based dispatch."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-09-14"
    :version "2017-09-14"}
