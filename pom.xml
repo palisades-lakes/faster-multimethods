@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project
- xmlns="http://maven.apache.org/POM/4.0.0"
- xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
- xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
  <modelVersion>4.0.0</modelVersion>
  <properties>
+ <doclint>none</doclint>
   <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   <clojure-maven-version>1.8.1</clojure-maven-version>
   <graph-maven-version>1.2.3</graph-maven-version>
@@ -23,6 +20,9 @@
   <maven-site-version>3.6</maven-site-version>
   <github-url>scm:git:https://github.com/palisades-lakes/faster-multimethods.git</github-url>
   <!-- github-url>scm:git:file://.</github-url -->
+  <timestamp>${maven.build.timestamp}</timestamp>
+  <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
+  
  </properties>
  <scm>
   <connection>${github-url}</connection>
@@ -78,10 +78,19 @@
           <ignore />
          </action>
         </pluginExecution>
-        <!-- <pluginExecution> <pluginExecutionFilter> <groupId>com.theoryinpractise</groupId> 
-         <artifactId>clojure-maven-plugin</artifactId> <versionRange>[${clojure-maven-version},)</versionRange> 
-         <goals> <goal>compile</goal> <goal>test</goal> </goals> </pluginExecutionFilter> 
-         <action> <ignore /> </action> </pluginExecution> -->
+        <pluginExecution>
+         <pluginExecutionFilter>
+          <groupId>com.theoryinpractise</groupId>
+          <artifactId>clojure-maven-plugin</artifactId>
+          <versionRange>[${clojure-maven-version},)</versionRange>
+          <goals>
+           <goal>compile</goal>
+          </goals>
+         </pluginExecutionFilter>
+         <action>
+          <ignore />
+         </action>
+        </pluginExecution>
        </pluginExecutions>
       </lifecycleMappingMetadata>
      </configuration>
@@ -89,6 +98,15 @@
    </plugins>
   </pluginManagement>
   <plugins>
+   <plugin>
+    <groupId>org.kuali.maven.plugins</groupId>
+    <artifactId>graph-maven-plugin</artifactId>
+    <version>1.2.3</version>
+    <configuration>
+     <generateDefaultGraphs>true</generateDefaultGraphs>
+     <direction>LR</direction>
+    </configuration>
+   </plugin>
    <plugin>
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-release-plugin</artifactId>
@@ -199,13 +217,27 @@
     <version>${maven-jar-version}</version>
     <configuration>
      <outputDirectory>lib</outputDirectory>
+     <archive>
+      <manifest>
+       <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+       <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+      </manifest>
+     </archive>
     </configuration>
+    <executions>
+     <execution>
+      <goals>
+       <goal>test-jar</goal>
+      </goals>
+     </execution>
+    </executions>
    </plugin>
    <plugin>
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-javadoc-plugin</artifactId>
     <version>${maven-javadoc-version}</version>
     <configuration>
+     <additionalparam>-Xdoclint:none</additionalparam>
      <outputDirectory>${project.build.directory}/javadoc</outputDirectory>
      <reportOutputDirectory>${project.reporting.outputDirectory}/javadoc</reportOutputDirectory>
      <destDir>docs/api</destDir>
@@ -229,6 +261,19 @@
     </executions>
    </plugin>
    <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-site-plugin</artifactId>
+    <version>${maven-site-version}</version>
+    <configuration>
+     <reportPlugins>
+      <plugin>
+       <groupId>org.apache.maven.plugins</groupId>
+       <artifactId>maven-javadoc-plugin</artifactId>
+      </plugin>
+     </reportPlugins>
+    </configuration>
+   </plugin>
+   <plugin>
     <artifactId>maven-assembly-plugin</artifactId>
     <version>${maven-assembly-version}</version>
     <configuration>
@@ -241,8 +286,8 @@
     </configuration>
     <executions>
      <execution>
-      <id>make-assembly</id> <!-- this is used for inheritance merges -->
-      <phase>site</phase> <!-- bind to the packaging phase -->
+      <id>make-assembly</id> 
+      <phase>site</phase>
       <goals>
        <goal>single</goal>
       </goals>
@@ -250,12 +295,14 @@
     </executions>
    </plugin>
   </plugins>
+
   <resources>
    <resource>
     <directory>src/main/clojure</directory>
    </resource>
    <resource>
     <directory>src/main/resources</directory>
+    <filtering>true</filtering>
    </resource>
   </resources>
   <testResources>
@@ -267,6 +314,7 @@
    </testResource>
   </testResources>
  </build>
+
  <reporting>
   <plugins>
    <plugin>
@@ -292,12 +340,12 @@
     </reportSets>
     <configuration>
      <!-- <destDir>target/site/docs/</destDir> -->
+     <additionalparam>-Xdoclint:none</additionalparam>
      <overview>src/main/java/overview.html</overview>
      <showPackage>true</showPackage>
      <showProtected>true</showProtected>
      <showPrivate>true</showPrivate>
      <quiet>true</quiet>
-     <additionalparam>-Xdoclint:none</additionalparam>
     </configuration>
    </plugin>
   </plugins>
@@ -306,6 +354,10 @@
   <repository>
    <id>maven2</id>
    <url>http://repo.maven.apache.org/maven2/</url>
+   <releases>
+    <enabled>true</enabled>
+    <updatePolicy>never</updatePolicy>
+   </releases>
    <snapshots>
     <enabled>false</enabled>
     <updatePolicy>never</updatePolicy>
@@ -315,6 +367,10 @@
   <repository>
    <id>clojars</id>
    <url>http://clojars.org/repo</url>
+   <releases>
+    <enabled>true</enabled>
+    <updatePolicy>never</updatePolicy>
+   </releases>
    <snapshots>
     <enabled>false</enabled>
     <updatePolicy>never</updatePolicy>
@@ -357,6 +413,7 @@
  <version>0.0.7-SNAPSHOT</version>
  <description>
  "Backwards compatible alternative to clojure's
- defmulti/defmethod, with about 1/10 the method lookup overhead."
+ defmulti/defmethod, with about 1/10 the method lookup overhead,
+ performance roughly comparable to protocols."
  </description>
 </project>
