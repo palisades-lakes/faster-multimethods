@@ -1,28 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project
+ xmlns="http://maven.apache.org/POM/4.0.0"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
  <modelVersion>4.0.0</modelVersion>
  <properties>
- <doclint>none</doclint>
+  <doclint>none</doclint>
   <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   <clojure-maven-version>1.8.1</clojure-maven-version>
   <graph-maven-version>1.2.3</graph-maven-version>
   <java-version>1.8</java-version>
   <lifecycle-mapping-version>1.0.0</lifecycle-mapping-version>
-  <maven-assembly-version>3.0.0</maven-assembly-version>
+  <maven-assembly-version>3.1.0</maven-assembly-version>
   <maven-clean-version>3.0.0</maven-clean-version>
-  <maven-compiler-version>3.6.2</maven-compiler-version>
-  <maven-dependency-version>3.0.1</maven-dependency-version>
+  <maven-compiler-version>3.7.0</maven-compiler-version>
+  <maven-dependency-version>3.0.2</maven-dependency-version>
   <maven-jar-version>3.0.2</maven-jar-version>
   <maven-javadoc-version>3.0.0-M1</maven-javadoc-version>
   <maven-project-info-reports-version>2.9</maven-project-info-reports-version>
   <maven-release-plugin-version>2.5.3</maven-release-plugin-version>
   <maven-scm-plugin-version>1.9.5</maven-scm-plugin-version>
   <maven-site-version>3.6</maven-site-version>
+  <versions-plugin-version>2.3</versions-plugin-version>
   <github-url>scm:git:https://github.com/palisades-lakes/faster-multimethods.git</github-url>
   <!-- github-url>scm:git:file://.</github-url -->
   <timestamp>${maven.build.timestamp}</timestamp>
   <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
-  
  </properties>
  <scm>
   <connection>${github-url}</connection>
@@ -286,7 +290,7 @@
     </configuration>
     <executions>
      <execution>
-      <id>make-assembly</id> 
+      <id>make-assembly</id>
       <phase>site</phase>
       <goals>
        <goal>single</goal>
@@ -347,6 +351,20 @@
      <showPrivate>true</showPrivate>
      <quiet>true</quiet>
     </configuration>
+   </plugin>
+   <plugin>
+    <groupId>org.codehaus.mojo</groupId>
+    <artifactId>versions-maven-plugin</artifactId>
+    <version>${versions-plugin-version}</version>
+    <reportSets>
+     <reportSet>
+      <reports>
+       <report>dependency-updates-report</report>
+       <report>plugin-updates-report</report>
+       <report>property-updates-report</report>
+      </reports>
+     </reportSet>
+    </reportSets>
    </plugin>
   </plugins>
  </reporting>
@@ -410,7 +428,7 @@
  </dependencies>
  <groupId>palisades-lakes</groupId>
  <artifactId>faster-multimethods</artifactId>
- <version>0.0.7-SNAPSHOT</version>
+ <version>0.1.0-beta0-SNAPSHOT</version>
  <description>
  "Backwards compatible alternative to clojure's
  defmulti/defmethod, with about 1/10 the method lookup overhead,
