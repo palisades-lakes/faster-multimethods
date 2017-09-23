@@ -207,14 +207,14 @@ Maven:
 <dependency>
   <groupId>palisades-lakes</groupId>
   <artifactId>faster-multimethods</artifactId>
-  <version>0.0.3</version>
+  <version>0.1.0</version>
 </dependency>
 ```
 
 Leinigen/Boot:
 ```clojure
 Leiningen/Boot
-[palisades-lakes/faster-multimethods "0.0.3"]
+[palisades-lakes/faster-multimethods "0.1.0"]
 ```
 
 ### Code examples
