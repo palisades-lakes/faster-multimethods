@@ -57,23 +57,18 @@ import palisades.lakes.multimethods.java.signature.Signature;
  * Changed to explicitly use the local hierarchy in preference
  * evaluation.
  * 
- * Changes to clojure.lang.MultiFn.
+ * Performance changes to clojure.lang.MultiFn.
  *
  * 1) Replace persistent data structures with simple
- * unmodifiable HashMaps, etc., requiring some discipline to use
+ * HashMaps, etc., requiring some discipline to use
  * mutable objects as immutable.
  * Eventually, should replace with minimal immutable version.
  * 
  * 2) Permit Signature as a dispatch value.
  *
- * 3) All fields private.
- * 
- * 4) Non-volatile cache. Might cause redundant updates to the 
- * cache, but shouldn't break anything.
- *
  * @author palisades dot lakes at gmail dot com
  * @since 2017-06-20
- * @version 2017-09-01
+ * @version 2017-09-22
  */
 @SuppressWarnings("unchecked")
 public final class MultiFnWithHierarchy extends AFn implements MultiFn {
@@ -346,6 +341,24 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
       return methodCache; }
     finally { rw.writeLock().unlock(); } }
 
+  //--------------------------------------------------------------
+
+  private final Set updateMinima (final Map h,
+                                  final Map.Entry e0,
+                                  final Set<Map.Entry> minima) {
+    boolean add = true;
+    final Set<Map.Entry> updated = new HashSet(minima.size());
+    final Object k0 = e0.getKey();
+    for (final Map.Entry e : minima) {
+      final Object k = e.getKey();
+      if (dominates(h,k,k0)) { add = false; }
+      if (! dominates(h,k0,k)) { updated.add(e); } } 
+    if (add) { updated.add(e0); }
+    return updated; }
+  
+  private static final Map.Entry first (final Set<Map.Entry> i) {
+    return i.iterator().next(); }
+  
   private IFn findAndCacheBestMethod (final Object dispatch) {
     rw.readLock().lock();
     Object bestValue;
@@ -353,26 +366,23 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
     final Map pt = preferTable;
     final Map ch = cachedHierarchy;
     try {
-      Map.Entry bestEntry = null;
+      Set<Map.Entry> minima = new HashSet(); // should be immutable?
       for (final Object o : methodTable.entrySet()) {
         final Map.Entry e = (Map.Entry) o;
         if (isA(ch,dispatch,e.getKey())) {
-          if ((bestEntry == null)
-            || dominates(ch,e.getKey(),bestEntry.getKey())) {
-            bestEntry = e; }
-          if(! dominates(ch,bestEntry.getKey(), e.getKey())) {
-            throw new IllegalArgumentException(
-              String.format(
-                "Multiple methods in multimethod '%s' " + 
-                  "match dispatch value: %s -> %s and %s, " +
-                  "and neither is preferred",
-                  name, dispatch, e.getKey(),
-                  bestEntry.getKey())); } } }
-      if (null == bestEntry) { 
+          minima = updateMinima(ch,e,minima); } } 
+      if (minima.isEmpty()) { 
         bestValue = methodTable.get(defaultDispatch);
         if (bestValue == null) { return null; } }
-      else { 
-        bestValue = bestEntry.getValue(); } }
+      else if (1 != minima.size()) {
+        throw new IllegalArgumentException(
+          String.format(
+            "Multiple methods in multimethod '%s' " + 
+              "match dispatch value: %s -> %s, " +
+              "and none is preferred",
+              name, dispatch, minima));  }
+      else {
+        bestValue = first(minima).getValue(); } }
     finally { rw.readLock().unlock(); }
 
     // ensure basis has stayed stable throughout, else redo

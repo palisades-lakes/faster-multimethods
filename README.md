@@ -1,12 +1,14 @@
-# faster-multimethods [![Clojars Project](https://img.shields.io/clojars/v/palisades-lakes/faster-multimethods.svg)](https://clojars.org/palisades-lakes/faster-multimethods)
+# faster-multimethods 
 
-Backwards compatible alternative to the 
+[![Clojars Project](https://img.shields.io/clojars/v/palisades-lakes/faster-multimethods.svg)](https://clojars.org/palisades-lakes/faster-multimethods)
+
+Alternative to the 
 Clojure 1.8.0 implementation of generic functions (aka multimethods)
 via  `defmulti`/`defmethod`/`MultiFn`.
 
 Very roughly 1/10 the cost for method lookup of Clojure 1.8.0,
-and comparable in performance to `defprotocol` while being
-fully dynamic,
+and comparable in performance to using protocols, while being
+fully dynamic.
 See 
 [multimethod-experiments](https://github.com/palisades-lakes/multimethod-experiments)
 for benchmark details.
@@ -25,7 +27,7 @@ Clojure 1.8.0 `defmulti`:
 
 ## Changes from Clojure 1.8.0
 
-The main differences from the Clojure 1.8.0 implementation:
+### Performance improvements
 
 1. In
 [`MultiFn`](https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/MultiFn.java),
@@ -68,7 +70,7 @@ Clojure collections would make this little library unnecessary.
     the dispatch function from, eg, `[(class a) (class b)]` to
     `(signature a b)`.
     
-4. Permit a `:hierarchy false` option to `defmulti`
+3. Permit a `:hierarchy false` option to `defmulti`
 (`nohierarchy` in the plots).
 
     Every multimethod (instance of MultiFn) contains a reference
@@ -83,6 +85,118 @@ Clojure collections would make this little library unnecessary.
     Removing the need for synchronizing with the `hierarchy`,
     further reduces the overhead.
     
+### Semantic changes
+
+The current implementation is not quite backwards compatible with 
+Clojure 1.8.0, because it fixes 4 issues with how the preferred
+method is found.
+
+The first issue is pretty clearly a bug:
+
+1. [MultiFn.prefers()](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105)
+ignores the multimethod's internal hierarchy.
+This is discussed in 
+[CLJ-2234](https://dev.clojure.org/jira/browse/CLJ-2234),
+which has a patch submitted.
+The problem is that ```prefers``` calls ```parents```
+without passing a hierarchy, so it is evaluated relative to the
+global hierarchy, rather than the multimethod's.
+
+faster-multimethods contains unit tests demonstrating the
+problem in Clojure 1.8.0 and verifying the fix.
+
+I plan to raise issues for the 3 remaining, more debatable problems
+once this one is resolved.
+
+2. [findAndCacheBestMethod](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L161)
+doesn't correctly find the minima of the 
+[dominates](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L126)
+partial ordering.
+It does a simple reduction of the ```methodTable```, 
+maintaining a single ```bestEntry```.
+If it encounters an entry that is not strictly ordered, 
+in either direction,
+relative to the ```bestEntry```, then it throws an exception.
+However, it's possible for there to be a later entry which
+would dominate both.
+What the reduction should do is maintain a set of current minima.
+If the current entry dominates any elements of the set, then those 
+should be removed.
+If the current entry is not dominated by any element of the set,
+then it should be added.
+
+I haven't created a unit test for this issue yet, because I'm not sure 
+how to reliably cause a spurious exception to be thrown.
+
+The remaining 2 problems could be attributed to differing expectations
+for the transitivity of the ```dominates``` relation.
+
+My expectation is that ```dominates``` should be transitive, that is:
+```dominates(x,y)``` and ```dominates(y,z)``` should imply
+```dominates(x,z)```.
+
+The ```dominates``` relation is implemented as 
+[isA](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L122)
+extended with
+[prefers](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105).
+```isA```, which combines Java inheritance with a Clojure hierarchy,
+is transitive.
+```prefers``` is not.
+
+The documentation for 
+[prefer-method](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/prefer-method)
+only specifies that ```(prefer-method f x y)``` results in methods
+defined for ```f``` for dispatch value ```x``` will be preferred
+to methods for ```y```.
+One could read this as meaning there is no implied transitivity,
+so that the only pairs in the ```prefers``` relation are those
+explicitly defined via ```prefer-method```.
+However, the code doesn't do that either.
+
+```Java
+private boolean prefers(Object x, Object y) {
+  IPersistentSet xprefs = (IPersistentSet) getPreferTable().valAt(x);
+  if(xprefs != null && xprefs.contains(y))
+    return true;
+  for(ISeq ps = RT.seq(parents.invoke(y)); ps != null; ps = ps.next())
+    {
+    if(prefers(x, ps.first()))
+      return true;
+    }
+  for(ISeq ps = RT.seq(parents.invoke(x)); ps != null; ps = ps.next())
+    {
+    if(prefers(ps.first(), y))
+      return true;
+    }
+  return false;
+}
+```
+
+```prefers``` first checks to see if there is an explicit edge on the
+prefer-method graph for ```(x,y)```. If so, return true.
+Fine so far.
+
+3. The second step in ```prefers``` essentially iterates over the
+```isA``` ancestors of ```y```, returning true if ```x``` 
+is preferred to any ancestor of ```y```. 
+This implies that ```(prefer-method f x Object)``` will cause the
+method for ```x``` to be preferred to a method defined for any other
+Java class or interface ```y```, as long as we don't have ```isA(x,y)```.
+The fix for this is to just remove the first ```for``` loop from 
+```prefers```. faster-multimethods contains a unit test demonstrating
+the behavior of Clojure 1.8.0 and verifying the fix.
+
+The 3rd step in ```prefers``` checks to see if any ```isA```
+ancestor of ```x``` is preferred to ```y```. In this way, ```prefers```
+inherits the transitivity of ```isA```. This is correct.
+
+4. ```prefers``` is missing the search needed to be completely transitive.
+It needs to check all the keys ```k``` of the ```preferTable```,
+returning true if ```prefers(x,k)``` and ```prefers(k,y)```.
+faster-multimethod contains a unit test demonstrating
+the non-transitivity of Clojure 1.8.0, and verifying the transitivity
+of its own implementation
+. 
 ## Usage
 
 ### Dependency 
