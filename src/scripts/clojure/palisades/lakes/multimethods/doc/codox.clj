@@ -22,7 +22,7 @@
                :description description
                :language :clojure
                :root-path (io/file "./")
-               :output-path "target/doc/codox"
+               :output-path "target/doc"
                :source-paths ["src/main/clojure"]
                :source-uri (str "https://github.com/palisades-lakes/"
                                 project-name
@@ -31,7 +31,7 @@
                                 "-{version}/{filepath}#L{line}")
                :namespaces :all
                ;;:doc-paths ["docs"]
-               :doc-files ["docs/overview.md" "docs/changes.md" ]
+               :doc-files ["docs/benchmarks.md" "docs/changes.md" ]
                :html {:namespace-list :flat}
                ;;:exclude-vars #"^(map)?->\p{Upper}"
                :metadata {:doc "TODO: write docs"

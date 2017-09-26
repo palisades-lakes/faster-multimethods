@@ -55,30 +55,30 @@ dependencies.
 
 8. Deploy codox to Github pages
 
-See [Deploying to GitHub Pages](https://github.com/weavejester/codox/wiki/Deploying-to-GitHub-Pages).
+    See [Deploying to GitHub Pages](https://github.com/weavejester/codox/wiki/Deploying-to-GitHub-Pages).
 
-In a git bash window:
-```
-rm -rf target/doc && mkdir target/doc
-https://github.com/palisades-lakes/faster-multimethods.git
-git clone https://github.com/palisades-lakes/faster-multimethods.git target/doc
-cd target/doc
-git symbolic-ref HEAD refs/heads/gh-pages
-rm .git/index
-git clean -fdx
-cd ../..
-```
-Run 
-```
-clj src\scripts\clojure\palisades\lakes\multimethods\codox.clj
-```
-In a git bash window:
-```
-cd target/doc
-git checkout gh-pages
-git add .
-git commit -am "new documentation push."
-git push -u origin gh-pages
-cd ../..
-```
+    In a git bash window:
+    ```
+    rm -rf target/doc && mkdir target/doc
+    git clone https://github.com/palisades-lakes/faster-multimethods.git target/doc
+    cd target/doc
+    git symbolic-ref HEAD refs/heads/gh-pages
+    rm .git/index
+    git clean -fdx
+    cd ../..
+    ```
+    Run 
+    ```
+    clj src\scripts\clojure\palisades\lakes\multimethods\codox.clj
+    ```
+    In a git bash window:
+    ```
+    cd target/doc
+    git checkout gh-pages
+    git add .
+    git commit -am "new documentation push."
+    git push -u origin gh-pages
+    cd ../..
+    ```
+    
 [documentation](https://palisades-lakes.github.io/faster-multimethods)
