@@ -122,12 +122,8 @@
                (new palisades.lakes.multimethods.java.MultiFnWoutHierarchy ~(name mm-name) ~dispatch-fn))))))))
 
 (defmacro defmethod
-  "*Clojure 1.8.0:*
-   
-   Creates and installs a new method of multimethod associated 
-   with dispatch-value. 
-
-   *faster-multimethods:*
+  "Creates and installs a new method for ```multifn``` associated 
+   with ```dispatch-value```. 
 
    `palisades.lakes.multimethods.defmethod` can only be used 
    with multimethods defined with 

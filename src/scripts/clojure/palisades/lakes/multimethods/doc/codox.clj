@@ -30,8 +30,8 @@
                                 project-name
                                 "-{version}/{filepath}#L{line}")
                :namespaces :all
-               :doc-paths ["docs"]
-               :doc-files ["README.md"]
+               ;;:doc-paths ["docs"]
+               :doc-files ["docs/overview.md" "docs/changes.md" ]
                :html {:namespace-list :flat}
                ;;:exclude-vars #"^(map)?->\p{Upper}"
                :metadata {:doc "TODO: write docs"
