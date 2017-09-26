@@ -10,51 +10,14 @@ Very roughly 1/10 the cost for method lookup of Clojure 1.8.0,
 and comparable in performance to using protocols, while being
 fully dynamic.
 
+Brief benchmark discussion is in [benchmarks](docs/benchmarks.md)
+
 A change history, including differences from Clojure 1.8.0,
-is in [changes.md](docs/changes.md).
+is in [changes](docs/changes.md).
 
-## Benchmarks
+## Dependency 
 
-See 
-[multimethod-experiments](https://github.com/palisades-lakes/multimethod-experiments)
-for details.
-
-Runtimes for various dynamic method lookup algorithms. 
-`hashmaps`, `signatures`, and `nohierarchy` are available from
-`faster-multimethods`.
-`defmulti` is Clojure 1.8.0 `defmulti`.
-`protocols` is Clojure 1.8.0 `defprotocol`,
-with hand-optimized if-then-else `instance?` calls to look up the 
-correct method based on all arguments.
-
-<img
-src="https://raw.githubusercontent.com/palisades-lakes/faster-multimethods/faster-multimethods-0.0.7/docs/figs/dynamic-multi.quantiles.png"
-alt="faster-multimethods vs Clojure 1.8.0 runtimes"
-style="width: 24cm">
-
-Overhead, taking a hand optimized Java if-then-else `instanceof`
-algorithm as the baseline, as a fraction of the overhead of
-Clojure 1.8.0 `defmulti`:
-
-<img
-src="https://raw.githubusercontent.com/palisades-lakes/faster-multimethods/faster-multimethods-0.0.7/docs/figs/dynamic-multi-overhead.quantiles.png"
-alt="faster-multimethods overhead as a fraction of Clojure 1.8.0"
-style="width: 24cm">
-
-Note that [faster-multimethods](https://github.com/palisades-lakes/faster-multimethods)
-outperforms Clojure 1.8.0 protocols except in the case of repeated calls
-to a single method (the lowest curve in each plot).
-When restricted to pure class-based dispatch (`nohierarchy`),
-[faster-multimethods](https://github.com/palisades-lakes/faster-multimethods)
-is close even in the single repeated method case,
-while being fully dynamic (unlike protocols, which are only dynamic
-for the first `this` argument).
-
-## Usage
-
-### Dependency 
-
-#### Maven:
+### Maven:
 
 ```xml
 <dependency>
@@ -64,14 +27,14 @@ for the first `this` argument).
 </dependency>
 ```
 
-#### Leiningen/Boot:
+### Leiningen/Boot:
 ```clojure
 [palisades-lakes/faster-multimethods "0.1.0"]
 ```
 
-### Code examples
+## Code examples
 
-#### Fastest:
+### Fastest:
 
 ```clojure
 (require `[palisades.lakes.multimethods.core :as plm])
@@ -89,7 +52,7 @@ for the first `this` argument).
 ...
 ```
 
-#### Most general:
+### Most general:
 
 ```clojure
 (require `[palisades.lakes.multimethods.core :as plm])

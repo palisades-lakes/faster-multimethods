@@ -22,7 +22,7 @@
                :description description
                :language :clojure
                :root-path (io/file "./")
-               :output-path "docs/codox"
+               :output-path "target/doc/codox"
                :source-paths ["src/main/clojure"]
                :source-uri (str "https://github.com/palisades-lakes/"
                                 project-name
