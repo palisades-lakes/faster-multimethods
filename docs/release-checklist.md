@@ -46,7 +46,7 @@ dependencies.
 
     In a git bash window:
     ```
-    rm -rf target/doc && mkdir target/doc
+    rm -rf target/doc && mkdir -p target/doc
     git clone https://github.com/palisades-lakes/faster-multimethods.git target/doc
     cd target/doc
     git symbolic-ref HEAD refs/heads/gh-pages
