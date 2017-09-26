@@ -6,7 +6,7 @@
   {:doc "Generate codox for faster-multimethods."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-08-05"
-   :version "2017-09-24"}
+   :version "2017-09-25"}
   
   (:require [clojure.java.io :as io]
             [codox.main :as codox]))
@@ -31,7 +31,9 @@
                                 "-{version}/{filepath}#L{line}")
                :namespaces :all
                ;;:doc-paths ["docs"]
-               :doc-files ["docs/benchmarks.md" "docs/changes.md" ]
+               :doc-files ["docs/overview.md" 
+                           "docs/benchmarks.md" 
+                           "docs/changes.md" ]
                :html {:namespace-list :flat}
                ;;:exclude-vars #"^(map)?->\p{Upper}"
                :metadata {:doc "TODO: write docs"

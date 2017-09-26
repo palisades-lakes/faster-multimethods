@@ -34,26 +34,13 @@ dependencies.
     This is a variation on step 3. Again, a judgment call which
     dependent projects to include here.
     
-5. (clj) update `src\scripts\clojure\doc\codox.clj` with the
-    release version. Run it (with `clj.bat` or `clj.sh`,
-    or however you like) 
-    
-    **TODO:** FIgure out how to do this from maven, integrating
-    with `mvn release:prepare`.
-    
-6. `mvn javadoc:javadoc`
-....
-    **TODO:** FIgure out how to do this from maven, integrating
-    with `mvn release:prepare`.
-    
-    
 5. (Git) commit and push.
 
 6. `mvn release:prepare`
 
 7. `mvn release:perform`
 
-8. Deploy codox to Github pages
+8. Deploy codox and javadoc to Github pages
 
     See [Deploying to GitHub Pages](https://github.com/weavejester/codox/wiki/Deploying-to-GitHub-Pages).
 
@@ -70,6 +57,10 @@ dependencies.
     Run 
     ```
     clj src\scripts\clojure\palisades\lakes\multimethods\codox.clj
+    ```
+    and 
+    ```
+    mvn javadoc:javadoc
     ```
     In a git bash window:
     ```
