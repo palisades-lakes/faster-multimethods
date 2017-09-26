@@ -52,6 +52,8 @@ dependencies.
     git symbolic-ref HEAD refs/heads/gh-pages
     rm .git/index
     git clean -fdx
+    cd target/doc
+    git checkout gh-pages
     cd ../..
     ```
     Run 
@@ -65,7 +67,6 @@ dependencies.
     In a git bash window:
     ```
     cd target/doc
-    git checkout gh-pages
     git add .
     git commit -am "new documentation push."
     git push -u origin gh-pages
