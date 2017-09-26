@@ -35,7 +35,7 @@ For small arities, the current version does linear search in
 nested arrays, and avoids allocating and reclaiming dispatch values.
 
 <img
-src="../figs/dynamic-multi.quantiles.png"
+src="https://raw.githubusercontent.com/palisades-lakes/faster-multimethods/master/docs/figs/dynamic-multi.quantiles.png"
 alt="faster-multimethods vs Clojure 1.8.0 runtimes"
 style="width: 24cm">
 
@@ -44,7 +44,7 @@ algorithm as the baseline, as a fraction of the overhead of
 Clojure 1.8.0 `defmulti`:
 
 <img
-src="../figs/dynamic-multi-overhead.quantiles.png"
+src="https://raw.githubusercontent.com/palisades-lakes/faster-multimethods/master/docs/figs/dynamic-multi-overhead.quantiles.png"
 alt="faster-multimethods overhead as a fraction of Clojure 1.8.0"
 style="width: 24cm">
 
