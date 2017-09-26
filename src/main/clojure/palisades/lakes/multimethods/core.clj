@@ -6,7 +6,7 @@
   {:doc "Faster multimethod method lookup."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-06-02"
-   :version "2017-08-23"}
+   :version "2017-09-26"}
   (:refer-clojure :exclude [defmulti defmethod remove-all-methods
                             remove-method prefer-method methods
                             get-method prefers]))
@@ -30,32 +30,111 @@
              (:default options) ") is not allowed.")))))
 ;;----------------------------------------------------------------
 (defmacro defmulti
-  "*Clojure 1.8.0:*
+  "Creates a new multimethod 
+   (an instance of `palisades.lakes.multimethods.java.MultiFn`)
+   named `mm-name` that uses `dispatch-fn` to generate method
+   lookup keys (aka dispatch values).
 
-  Creates a new multimethod with the associated dispatch function.
-  The docstring and attr-map are optional.
+  If the `mm-name` `Var`
+  is already defined and its value is a `MultiFn`, `defmulti`
+  silently does nothing. This is the Clojure 1.8.0 `defmulti`
+  behavior. 
+ 
+  (This seems to me like bad answer to the problem
+  of accidentally re-evaluating a given `defmulti` and wiping
+  out all the methods. I think a better design would make
+  `MultiFn` effectively immutable. [[defmulti]], [[defmethod]],
+  etc., would return new instances which are updates of the existing
+  instance, and call `alter-var-root` to update the value of `mm-name`. 
+  This, I believe, is what `defn` does.)
+ 
+  - `mm-name`: a namespace qualified `Symbol`. The `MultFn` will
+  be the value of the `Var` with that name. 
 
-  Options are key-value pairs and may be one of:
+  
+  - `docstring?` (optional): documentation string used as the
+  `:doc` metadata on `#'mm-name`.
 
-  :default
+  - `attr-map?` (optional): more metadata for the `#'mm-name`.
 
-  The default dispatch value, defaults to :default
+  - `dispatch-fn` an instance of `clojure.lang.IFn` that returns
+   _legal dispatch values_ when applied to (supported) arguments 
+   passed to the `MultiFn`. 
 
-  :hierarchy
+      A legal dispatch value is either an _atomic dispatch value_, 
+   an instance of `clojure.lang.IPersistentVector` 
+   containing legal dispatch values, or
+   an instance of `palisades.lakes.multimethods.java.Signature`.   
+   
+      An *atomic dispatch value* must be either a `Class`, or a
+   namespace-qualified instance of `clojure.lang.Named` 
+  (that is, a `Symbol` or a `Keyword`). If the value of `:hierarchy` in the corresponding 
+   [[defmulti]] is explicitly `false` or `nil` (not just missing), 
+   then atomic dispatch values are restricted to classes. 
+   
+      A `Signature` is essentially an immutable list of classes.
+      If using signatures, the `dispatch-fn` should call 
+      [[extract-signature]]. 
 
-  The value used for hierarchical dispatch (e.g. ::square is-a ::shape)
+      **Warning:** I believe vectors containing dispatch values can 
+   be recursive, that is, a vector of dispatch values may vectors
+   of dispatch values, as long as the tree eventually terminates
+   in atomic dispatch values. However, I haven't tested this,
+   and the unit tests inherited from Clojure 1.8.0 don't seem
+   to test it either.  
+   Signatures are NOT recursive.  
+   **TODO:** add tests to verify or exlcude this possibility.
 
-  Hierarchies are type-like relationships that do not depend upon type
-  inheritance. By default Clojure's multimethods dispatch off of a
-  global hierarchy map.  However, a hierarchy relationship can be
-  created with the derive function used to augment the root ancestor
-  created with make-hierarchy.
+      **Warning:** Vectors of signatures probably
+   work, but hasn't been tested. It's almost surely better not to 
+   mix them.  
+   **TODO:** add tests to verify or exlcude this possibility.
+   
+      **Warning:** currrently there is no check whether 
+   `dispatch-value` is legal or not. A misleading exception may be 
+   thrown at some unspecified later time.  
+   **TODO:** add validation.
 
-  Multimethods expect the value of the hierarchy option to be supplied as
-  a reference type e.g. a var (i.e. via the Var-quote dispatch macro #'
-  or the var special form).
+  - `options` (optional): are key-value pairs and may be one of:
 
-  *faster-multimethods:*
+      - `:hierarchy` used for method lookup when the dispatch
+        values are or contain namespace-qualified instances of `Named`. 
+        
+          See
+        [multimethods and hierarchies](https://clojure.org/reference/multimethods)
+        for information on how to create and modify hierarchies.
+
+          If the `:hierarchy` is not supplied, it defaults to 
+         `#'clojure.core/global-hierarchy`.
+
+          If `:hierarchy` is supplied and its value is `nil` or 'false`,
+          then no `Named` or vector dispatch values are permitted;
+          method lookup is optimized assuming classes and 
+          signatures only.
+
+          Otherwise the value of the `:hierarchy` option 
+          must be a `Var` 
+         (i.e. via the Var-quote dispatch macro #' or the var 
+         special form) holding a hashmape created with 
+         `clojure.core/make-hierarchy`.
+
+          **Warning:** Multimethods that use hierarchies depend on
+          mutable shared state. 
+
+          **Warning:** the Clojure hierarchy functions behave 
+        differently for 
+        the default `clojure.core/global-hierarchy` versus a 
+        custom local hierarchy.
+        Updates to the global hierarchy call `alter-var-root`
+        on `clojure.core/global-hierarchy`, mutating shared state.
+        Updates to a custom hierarchy return a new updated
+        hashmap; it's left to the caller to rebind any `Var`
+        which might be pointing ot that hashmap.
+        
+      - `:default`: The default dispatch value, defaults to `:default`.
+         Not supported, and an exception is thrown,
+          when `:hierarchy false` or `:hierarchy nil`
+          and the value of `:default` is not `false` or `nil`.
 
   The dispatch function must return a legal dispatch value (but
   there is no guarantee of what or where an exception will be 
@@ -64,19 +143,19 @@
   values. An *atomic dispatch value* must be either a `Class`, an
   instance of `clojure.lang.Named` (that is, a `Symbol` or a 
   `Keyword`), or a signature 
-  (an instance of `palisades.lakes.multimethods.java.signature.Signature`).
+  (an instance of `palisades.lakes.multimethods.java.Signature`).
 
    **Note:** currrently there is no check whether the `dispatch-value`
    is legal or not. A misleading exception may be thrown at some
    unspecified later time.
 
-  If the value of :hierarchy is `false` or `nil`, then atomic 
+   If the value of :hierarchy is `false` or `nil`, then atomic 
   dispatch values are restricted to Classes and signatures.
   In that case, :default is ignored.
   "
   
-  {:arglists '([name docstring? attr-map? dispatch-fn & options])
-   :added "Clojure 1.0"}
+  {:arglists '([mm-name docstring? attr-map? dispatch-fn & options])
+   :added "faster-multimethods 0.0.0"}
   
   [mm-name & options]
   
@@ -121,34 +200,71 @@
              (def ~(with-meta mm-name m)
                (new palisades.lakes.multimethods.java.MultiFnWoutHierarchy ~(name mm-name) ~dispatch-fn))))))))
 
+;;----------------------------------------------------------------
+
 (defmacro defmethod
-  "Creates and installs a new method for ```multifn``` associated 
-   with ```dispatch-value```. 
 
-   `palisades.lakes.multimethods.defmethod` can only be used 
-   with multimethods defined with 
-   `palisades.lakes.multimethods.core/defmulti`.
+  "Creates and installs a new method for `multifn` associated 
+   with `dispatch-value`. Modifies `multifn` destructively.
 
-   A legal `dispatch-value` is either
-   an *atomic dispatch value*, or a vector containing atomic dispatch
-   values. An *atomic dispatch value* must be either a `Class`, an
-   instance of `clojure.lang.Named` (that is, a `Symbol` or a 
-   `Keyword`), or a signature 
-   (an instance of `palisades.lakes.multimethods.java.signature.Signature`).
+   - `multifn`: an instance of 
+    `palisades.lakes.multimethods.java.MultiFn`,
+    created with [[palisades.lakes.multimethods/defmulti]].
 
-   **Note:** currrently there is no check whether the `dispatch-value`
-   is legal or not. A misleading exception may be thrown at some
-   unspecified later time.
+   - `dispatch-value`: a _legal dispatch value_.
 
-   If the value of :hierarchy in the corresponding `defmulti`
-   is `false` or `nil`, then atomic 
-   dispatch values are restricted to Classes and signatures.
-   "
-  {:added "Clojure 1.0"}
+      A legal dispatch value is either an _atomic dispatch value_, 
+   an instance of `clojure.lang.IPersistentVector` 
+   containing legal dispatch values, or
+   an instance of `palisades.lakes.multimethods.java.Signature`.   
+   
+      An *atomic dispatch value* must be either a `Class`, or a
+   namespace-qualified instance of `clojure.lang.Named` 
+   (that is, a `Symbol` or a `Keyword`). 
+   If the value of `:hierarchy` in the corresponding 
+   [[defmulti]] is explicitly `false` or `nil` (not just missing), 
+   then atomic dispatch values are restricted to classes. 
+   
+      A `Signature` is essentially an immutable list of classes.
+      If using signatures, the `dispatch-value` should be computed
+      with a call to [[signature]]. 
+
+      **Warning:** I believe vectors containing dispatch values can 
+   be recursive, that is, a vector of dispatch values may vectors
+   of dispatch values, as long as the tree eventually terminates
+   in atomic dispatch values. However, I haven't tested this,
+   and the unit tests inherited from Clojure 1.8.0 don't seem
+   to test it either.  
+   Signatures are NOT recursive.  
+   **TODO:** add tests to verify or exlcude this possibility.
+
+      **Warning:** Vectors of signatures probably
+   work, but hasn't been tested. It's almost surely better not to 
+   mix them.  
+   **TODO:** add tests to verify or exlcude this possibility.
+   
+      **Warning:** currrently there is no check whether 
+   `dispatch-value` is legal or not. A misleading exception may be 
+   thrown at some unspecified later time.  
+   **TODO:** add validation.
+  
+  - `fn-tail`: one or more of arglist plus function body, which are
+     passed to `fn` to generate the method function. Note that
+     signatures are only intended to support single arity method
+     functions.
+
+  **Note:** unlike [[defmulti]], re-evaluating `defmethod` will
+  replace any existing method, mutating the `MultiFn`
+  (rather than creating a new `MultiFn` and re-binding the `Var`
+  holding it."
+
+  {:added "faster-multimethods 0.0.0"}
   
   [multifn dispatch-val & fn-tail]
   
-  `(.addMethod ~(with-meta multifn {:tag 'palisades.lakes.multimethods.java.MultiFn}) 
+  `(.addMethod 
+     ~(with-meta multifn 
+        {:tag 'palisades.lakes.multimethods.java.MultiFn}) 
      ~dispatch-val (fn ~multifn ~@fn-tail)))
 
 (defn remove-all-methods
@@ -156,9 +272,9 @@
 
    `palisades.lakes.multimethods.core/remove-all-methods` can only be used 
    with multimethods
-   defined with `palisades.lakes.multimethods.core/defmulti`."
+   defined with `[[palisades.lakes.multimethods.core/defmulti]]`."
   
-  {:added "Clojure 1.2"
+  {:added "faster-multimethods 0.0.0"
    :static true} 
   
   [^palisades.lakes.multimethods.java.MultiFn multifn]
@@ -172,7 +288,7 @@
    with multimethods
    defined with `palisades.lakes.multimethods.core/defmulti`."
   
-  {:added "Clojure 1.0"
+  {:added {:added "faster-multimethods 0.0.0"}
    :static true}
   [^palisades.lakes.multimethods.java.MultiFn multifn dispatch-val]
   (.removeMethod multifn dispatch-val))
@@ -185,7 +301,7 @@
    with multimethods
    defined with `palisades.lakes.multimethods.core/defmulti`."
   
-  {:added "Clojure 1.0"
+  {:added {:added "faster-multimethods 0.0.0"}
    :static true}
   [^palisades.lakes.multimethods.java.MultiFn multifn dispatch-val-x dispatch-val-y]
   (.preferMethod multifn dispatch-val-x dispatch-val-y))
@@ -198,7 +314,7 @@
    defined with `palisades.lakes.multimethods.core/defmulti`."
   
 
-  {:added "Clojure 1.0"
+  {:added "faster-multimethods 0.0.0"
    :static true}
   [^palisades.lakes.multimethods.java.MultiFn multifn] 
   (.getMethodTable multifn))
@@ -212,7 +328,7 @@
    defined with `palisades.lakes.multimethods.core/defmulti`."
   
 
-  {:added "Clojure 1.0"
+  {:added "faster-multimethods 0.0.0"
    :static true}
   [^palisades.lakes.multimethods.java.MultiFn multifn dispatch-val] 
   (.getMethod multifn dispatch-val))
@@ -225,7 +341,7 @@
    defined with `palisades.lakes.multimethods.core/defmulti`."
   
 
-  {:added "Clojure 1.0"
+  {:added "faster-multimethods 0.0.0"
    :static true}
   [^palisades.lakes.multimethods.java.MultiFn multifn] 
   (.getPreferTable multifn))
@@ -234,20 +350,27 @@
 
 (defmacro signature 
   
-  "Return an appropriate implementation of `Signature` for the
-   `Class` arguments..
+  "Return an appropriate implementation of 
+   `Signature` for the `Class` valued arguments
+    (in the arity 1 case, it just returns the `Class` itself).
 
-   `palisades.lakes.multimethods.core/signature` can only be used 
+   **Warning:** `signature` can only be used 
    as a dispatch function with multimethods
-   defined with `palisades.lakes.multimethods.core/defmulti`."
+   defined with [[palisades.lakes.multimethods.core/defmulti]]."
+  
+ { :arglists '([^Class c0] 
+                [^Class c0 ^Class c1]
+                [^Class c0 ^Class c1 ^Class c2]
+                [^Class c0 ^Class c1 ^Class c2 & classes])
+  :added "faster-multimethods 0.0.0"}
   
   ([c0] `(with-meta c0 {:tag 'Class}))
   ([c0 c1] 
-    `(palisades.lakes.multimethods.java.signature.Signature2.
+    `(palisades.lakes.multimethods.java.Signature2.
        ~(with-meta c0 {:tag 'Class})
        ~(with-meta c1 {:tag 'Class})))
   ([c0 c1 c2] 
-    `(palisades.lakes.multimethods.java.signature.Signature3.
+    `(palisades.lakes.multimethods.java.Signature3.
        ~(with-meta c0 {:tag 'Class})
        ~(with-meta c1 {:tag 'Class})
        ~(with-meta c2 {:tag 'Class})))
@@ -261,19 +384,26 @@
 (defmacro extract-signature 
   
   "Return an appropriate implementation of `Signature` for the
-   arguments, by applying `getClass` as needed.
+   arguments, calling `(.getClass xi)` as needed
+   (in the arity 1 case, it returns `(.getClass x0)` itself).
 
-   `palisades.lakes.multimethods.core/extract-signature` can only be used 
+   **Warning:** `extract-signature` can only be used 
    as a dispatch function with multimethods
-   defined with `palisades.lakes.multimethods.core/defmulti`."
+   defined with [[palisades.lakes.multimethods.core/defmulti]]."
+  
+ { :arglists '([x0] 
+                [x0 x1]
+                [x0 x1 x2]
+                [x0 x1 x2 & args])
+  :added "faster-multimethods 0.0.0"}
   
   ([x0] `(.getClass ~(with-meta x0 {:tag 'Object})))
   ([x0 x1] 
-    `(palisades.lakes.multimethods.java.signature.Signature2.
+    `(palisades.lakes.multimethods.java.Signature2.
        (.getClass ~(with-meta x0 {:tag 'Object}))
        (.getClass ~(with-meta x1 {:tag 'Object}))))
   ([x0 x1 x2] 
-    `(palisades.lakes.multimethods.java.signature.Signature3.
+    `(palisades.lakes.multimethods.java.Signature3.
        (.getClass ~(with-meta x0 {:tag 'Object}))
        (.getClass ~(with-meta x1 {:tag 'Object}))
        (.getClass ~(with-meta x2 {:tag 'Object}))))

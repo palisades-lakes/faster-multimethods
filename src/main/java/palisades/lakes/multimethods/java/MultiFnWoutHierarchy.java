@@ -31,7 +31,6 @@ import clojure.lang.PersistentHashSet;
 import clojure.lang.RT;
 import clojure.lang.Util;
 import clojure.lang.Var;
-import palisades.lakes.multimethods.java.signature.Signature;
 
 /** Semantic changes to clojure.lang.MultiFn.
  * 

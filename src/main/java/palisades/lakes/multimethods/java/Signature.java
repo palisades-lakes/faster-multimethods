@@ -1,4 +1,4 @@
-package palisades.lakes.multimethods.java.signature;
+package palisades.lakes.multimethods.java;
 
 import java.util.List;
 
