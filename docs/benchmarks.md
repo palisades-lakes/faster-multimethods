@@ -37,7 +37,7 @@ nested arrays, and avoids allocating and reclaiming dispatch values.
 <img
 src="https://raw.githubusercontent.com/palisades-lakes/faster-multimethods/master/docs/figs/dynamic-multi.quantiles.png"
 alt="faster-multimethods vs Clojure 1.8.0 runtimes"
-style="width: 24cm">
+style="width: 30cm">
 
 Overhead, taking a hand optimized Java if-then-else `instanceof`
 algorithm as the baseline, as a fraction of the overhead of
@@ -46,7 +46,7 @@ Clojure 1.8.0 `defmulti`:
 <img
 src="https://raw.githubusercontent.com/palisades-lakes/faster-multimethods/master/docs/figs/dynamic-multi-overhead.quantiles.png"
 alt="faster-multimethods overhead as a fraction of Clojure 1.8.0"
-style="width: 24cm">
+style="width: 30cm">
 
 Note that [faster-multimethods](https://github.com/palisades-lakes/faster-multimethods)
 outperforms Clojure 1.8.0 protocols except in the case of repeated calls
