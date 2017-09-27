@@ -1,8 +1,8 @@
 # change history
 
-## Changes from Clojure 1.8.0
+## changes from Clojure 1.8.0
 
-### Performance improvements
+### performance improvements
 
 1. In
 [`MultiFn`](https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/MultiFn.java),
@@ -60,7 +60,7 @@ Clojure collections would make this little library unnecessary.
     Removing the need for synchronizing with the `hierarchy`,
     further reduces the overhead.
     
-### Semantic changes
+### pemantic changes
 
 The current implementation is not quite backwards compatible with 
 Clojure 1.8.0, because it fixes 4 issues with how the preferred

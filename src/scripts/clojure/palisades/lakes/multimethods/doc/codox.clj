@@ -14,49 +14,40 @@
 #_(set! *warn-on-reflection* true)
 #_(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-(let [version "0.0.7"
-      project-name "faster-multimethods"
-      description "Faster, (almost) backwards compatible multimethods."
+(def version "0.0.7")
+(def project-name "faster-multimethods")
+(def description "Faster, (almost) backwards compatible multimethods.")
+(def doc-files ["docs/overview.md" 
+                "docs/benchmarks.md" 
+                "docs/lookup.md"
+                "docs/changes.md" ])
+(def namespaces :all)
+;;----------------------------------------------------------------
+(defn- src-path [branch] (str "src/" branch "/clojure"))
+(defn- src-pattern [branch] (re-pattern (src-path branch)))
+(defn- src-uri [branch]
+  (str "https://github.com/palisades-lakes/"
+       project-name
+       "/blob/"
+       project-name
+       "-{version}/"
+       (src-path branch)
+       "/{classpath}#L{line}"))
+;;----------------------------------------------------------------
+(let [source-paths (mapv src-path ["main" #_"test" #_"scripts"])
+      source-uri (into {} (map #(vector (src-pattern %) (src-uri %))
+                               ["main" "test" "scripts"]))
       options {:name project-name
                :version version 
                :description description
                :language :clojure
                :root-path (io/file "./")
                :output-path "target/doc"
-               :source-paths ["src/main/clojure"
-                              #_"src/test/clojure"
-                              #_"src/scripts/clojure"]
-               ;;https://github.com/palisades-lakes/faster-multimethods/blob/faster-multimethods-0.0.7/src/main/clojure/palisades/lakes/multimethods/core.clj
-               :source-uri 
-               {#"src/main/clojure"
-                (str "https://github.com/palisades-lakes/"
-                      project-name
-                      "/blob/"
-                      project-name
-                      "-{version}/"
-                      "src/main/clojure"
-                      "/{classpath}#L{line}")
-                #"src/test/clojure"
-                (str "https://github.com/palisades-lakes/"
-                      project-name
-                      "/blob/"
-                      project-name
-                      "-{version}/"
-                      "src/test/clojure"
-                      "/{classpath}#L{line}")
-                #"src/scripts/clojure"
-                (str "https://github.com/palisades-lakes/"
-                      project-name
-                      "/blob/"
-                      project-name
-                      "-{version}/"
-                      "src/scripts/clojure"
-                      "/{classpath}#L{line}")}
-               :namespaces :all
+               :source-paths source-paths
+               :source-uri source-uri
+               :namespaces namespaces
                ;;:doc-paths ["docs"]
-               :doc-files ["docs/overview.md" 
-                           "docs/benchmarks.md" 
-                           "docs/changes.md" ]
+               :doc-files doc-files
                :html {:namespace-list :flat}
                ;;:exclude-vars #"^(map)?->\p{Upper}"
                :metadata {:doc "TODO: write docs"
