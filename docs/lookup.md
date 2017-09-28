@@ -1,23 +1,50 @@
-# method lookup, dispatch values and functions
+# method lookup
 
 A _multimethod_ is a Clojure function 
-(an instance of `clojure.lang.IFn`) which, when invoked:
+(an instance of `palisades.lakes.multimethods.java.MultiFn`
+which implements`clojure.lang.IFn`) which, when invoked:
 
 1. First applies a _dispatch function_ to the arguments, 
 returning a _dispatch value_. 
 
-2. Then finds the  _appplicable method_ from a table mapping dispatch values 
-to functions, using a partial ordering of the possible
-dispatch values to determine which
-methods are _applicable,_ and, among those, the minima
-of the partial ordering.
+2. Finds the  _appplicable methods_ 
+from a table mapping dispatch values 
+to functions.
 
-3. If there is a unique minimal method, 
+3. Finds the minima of a preference partial ordering of
+the applicable methods.
+
+4. If there is a unique minimal method, 
 it applies that to the arguments.
 If there are no applicable methods, or more than one minimal 
 method, an exception is thrown.
  
-### legal dispatch values
+The purpose of this document is to explain the process in more
+detail.
+
+(Note: I believe what I describe here is more complicated than necessary,
+due to a desire to remain (mostly) consistent with Clojure 1.8.0
+behavior. I've changed certain aspects of the behavior that
+I believe are unintended bugs --- see 
+[changes](https://github.com/palisades-lakes/faster-multimethods/blob/master/docs/changes.md)
+for a detailed discussion. of the differences.)
+
+## dispatch function
+
+The dispatch function is responsible for returning 
+_legal dispatch values_.
+
+(**Warning:** 
+Because we want method lookup to be fast,
+the current implementation (like Clojure 1.8.0)
+doesn't validate dispatch values before method lookup. 
+Instead, a possibly mysterious looking exception will be thrown
+some time later.
+You can use `palisades.lakes.multimethods\legal-dispatch-value?`
+in your dispatch function, permanently if you can afford to cost,
+or at least in unit tests, and during development or debugging.)
+    
+## legal dispatch values
 
 Legal dispatch values are one of (my terminology):
 
@@ -52,62 +79,54 @@ Legal dispatch values are one of (my terminology):
     and don't plan to support it. However, I open to arguments
     for why it would be worth the trouble.)
     
-### dispatch value ordering
+## applicable methods
 
-Starts from ordering o atomic values and extended to recursive and
-signatures.
+Applicable methods are determined using 
+a partial ordering of dispatch values I'm calling `isa<=`.
+`isa<=` depends in general on a `Var` pointing
+to a shared, mutable Clojure 
+[hierarchy](https://clojure.org/reference/multimethods).
 
-Method lookup is done using 2 distinct partial orderings of
-dispatch values (in pseudo-code `preferred?` is not an actual 
-function):
+The premise is that any method of `f` 
+defined for dispatch value `y`
+could be applied to arguments resulting in dispatch value `x`,
+as long as `(isa<= f x y)`.
 
-- `(isa? hierarchy d0 d1)` determines whether a method defined for 
-`d1` is applicable to the arguments producing the disptach value
-`d0`.
+([faster-multimethods](https://palisades-lakes.github.io/faster-multimethods/palisades.lakes.multimethods.core.html)
+has a function of the same name, but that's provided for 
+unit tests/debugging and isn't called during method lookup.)
 
-- `(preferred? hierarchy d0 d1)`, extends the `isa?` ordering
-with additional pairs introduced by calls to `prefer-method`.
+- `(isa<= f s0 s1)` if `(.isAssignableFrom s1 s0)`,
+when `s0` and `s1` are signatures.
 
-#### isa?
+- `(isa<= f r0 r1)`, when `r0` and `r1` are recursive dispatch
+values, if `r0` and `r1` are the same shape, and 
+`(isa<= f a0 a1)` is true for every pair of corresponding atomic 
+leaves of `r0` and `r1`.
+ 
+- `(isa<= f a0 a1)` if `(clojure.core\isa? (.hierarchy f) a0 a1)`
+when `a0` and `a1` are atomic.
 
-The `isa?` relation is derived from a hierarchy in several steps:
-
-1. Every hierarchy maintains an explicit directed acyclic graph 
-(DAG) made up of child-parent edges
-(created with calls to `derive`)
-where the parent is an instance of `Named` and the child is 
-an instance of `Named` or `Class`.
-The `isa?` relations includes these child-parent pairs,
-a relation on 
-{all atomic dispatch values} X {`Named` dispatch values}.
-
-2. The `isa?` relation is extended with implicit pairs 
-corresponding to the `parent.isAssignableFrom(child)` 
-relation between Java classes/interfaces. 
-These pairs are a relation on
-{`Class` dispatch values} X {`Class` dispatch values}.
-
-3. The `atomic-isa?` relation (again pseudo-code)
-is the transitive closure of the union of the relations in 
-steps 1 and 2.
-
-4. Finally, `atomic-isa?` is extended to `isa?`
-on all legal dispatch values via recursion.
-A pair of recursive dispatch values has an child-parent edge 
-if they have the same shape
-(the same number of elements at every level of nesting), 
-and there is a child-parent edge in the original DAG for every
-ordered pair of corresponding leaf atomic elements.
-
-**Note:** `isa?` is derived from a hierarchy,
-which may be shared by many multimethods,
-especially in the default case, which uses the unique
-global hierarchy,
-and may be modified (via `derive`/`underive`) at any time,
-in any thread.
-This makes it easier to get consistent behavior from a group of
-related multimethods, but harder to prevent unexpected 
-side-effects from changes.
+    - When `a0` and `a1` are classes, `isa?` ignores the
+    hierarchy, and is just (.isAssignableFrom a1 a0)`.
+    
+    - When 'a0' is `Named` and 'a1' is a `Class`, `isa?` returns 
+    false. 
+    
+    - Otherwise, the hierarchy is used. A hierarchy is a directed
+    acyclic graph created with calls to `clojure.core/derive`.
+    Edges in this graph connect 2 `Named` or a `Class` and a `Named`.
+    The `isa?` relation is the transitive closure of the 
+    child-parent edge relation, that is, the descendant-ancestor
+    relation. 
+    
+    Note that `(isa? c n)` may be true for a `Class` `c` and
+    a `Named` `n`, but not the other way around.
+    
+    
+       
+    
+    
 
 #### preferred?
 

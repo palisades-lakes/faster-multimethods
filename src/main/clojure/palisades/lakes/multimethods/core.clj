@@ -6,10 +6,107 @@
   {:doc "Faster multimethod method lookup."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-06-02"
-   :version "2017-09-26"}
+   :version "2017-09-27"}
   (:refer-clojure :exclude [defmulti defmethod remove-all-methods
                             remove-method prefer-method methods
                             get-method prefers]))
+;;----------------------------------------------------------------
+
+(defmacro signature 
+  
+  "Return an appropriate implementation of 
+   `Signature` for the `Class` valued arguments
+    (in the arity 1 case, it just returns the `Class` itself).
+
+   **Warning:** `signature` can only be used 
+   as a dispatch function with multimethods
+   defined with [[palisades.lakes.multimethods.core/defmulti]]."
+  
+  { :arglists '([^Class c0] 
+                 [^Class c0 ^Class c1]
+                 [^Class c0 ^Class c1 ^Class c2]
+                 [^Class c0 ^Class c1 ^Class c2 & classes])
+   :added "faster-multimethods 0.0.0"}
+  
+  ([c0] `(with-meta c0 {:tag 'Class}))
+  ([c0 c1] 
+    `(palisades.lakes.multimethods.java.Signature2.
+       ~(with-meta c0 {:tag 'Class})
+       ~(with-meta c1 {:tag 'Class})))
+  ([c0 c1 c2] 
+    `(palisades.lakes.multimethods.java.Signature3.
+       ~(with-meta c0 {:tag 'Class})
+       ~(with-meta c1 {:tag 'Class})
+       ~(with-meta c2 {:tag 'Class})))
+  ([c0 c1 c2 & cs] 
+    `(palisades.lakes.multimethods.java.SignatureN.
+       ~(with-meta c0 {:tag 'Class})
+       ~(with-meta c1 {:tag 'Class})
+       ~(with-meta c2 {:tag 'Class})
+       ~(with-meta cs {:tag 'clojure.lang.ArraySeq}))))
+
+(defmacro extract-signature 
+  
+  "Return an appropriate implementation of `Signature` for the
+   arguments, calling `(.getClass xi)` as needed
+   (in the arity 1 case, it returns `(.getClass x0)` itself).
+
+   **Warning:** `extract-signature` can only be used 
+   as a dispatch function with multimethods
+   defined with [[palisades.lakes.multimethods.core/defmulti]]."
+  
+  { :arglists '([x0] 
+                 [x0 x1]
+                 [x0 x1 x2]
+                 [x0 x1 x2 & args])
+   :added "faster-multimethods 0.0.0"}
+  
+  ([x0] `(.getClass ~(with-meta x0 {:tag 'Object})))
+  ([x0 x1] 
+    `(palisades.lakes.multimethods.java.Signature2.
+       (.getClass ~(with-meta x0 {:tag 'Object}))
+       (.getClass ~(with-meta x1 {:tag 'Object}))))
+  ([x0 x1 x2] 
+    `(palisades.lakes.multimethods.java.Signature3.
+       (.getClass ~(with-meta x0 {:tag 'Object}))
+       (.getClass ~(with-meta x1 {:tag 'Object}))
+       (.getClass ~(with-meta x2 {:tag 'Object}))))
+  ([x0 x1 x2 & xs] 
+    `(SignatureN/extract 
+       ~x0 ~x1 ~x2 ~with-meta xs {:tag 'clojure.lang.ArraySeq})))
+
+(defn signature? 
+  "Is `v` a signatue 
+   (ie, an instance of `palisades.lakes.multimethods.java.Signature`)?"
+  [v] 
+  (instance? palisades.lakes.multimethods.java.Signature v))   
+;;----------------------------------------------------------------
+;; dispatch value validation
+;;----------------------------------------------------------------
+(defn atomic-dispatch-value? 
+  "Is `v` an atomic dispatch value (ie a `Class` or a
+   namespace-qualified instance of `Named`, concretely,
+   a namespace-qualified `Symbol` or `Keyword`)?"
+  [v]
+  (or (class? v)
+      (and (instance? clojure.lang.Named v) 
+           (namespace v))))
+
+(defn recursive-dispatch-value? 
+  "Is `v` a recursive dispatch value (ie a vector whose elements
+   are atomic or recurswive dispatch values)?"
+  [v]
+  (and (vector? v)
+       (every? #(or (atomic-dispatch-value? %)
+                    (recursive-dispatch-value? %))
+               v)))
+
+(defn legal-dispatch-value?
+  "Is `v` a legal dispatch value?"
+  [v]
+  (or (atomic-dispatch-value? v)
+      (signature? v)
+      (recursive-dispatch-value? v)))
 ;;----------------------------------------------------------------
 (defn- check-valid-options
   "Throws an exception if the given option map contains keys not listed
@@ -28,6 +125,86 @@
         (str ":hierarchy is" (:hierarchy options)
              ", which means truthy :default ("
              (:default options) ") is not allowed.")))))
+;;----------------------------------------------------------------
+;; dispatch value partial orderings
+;;----------------------------------------------------------------
+
+(defn isa<= 
+  "Extension of `clojure.core/isa?`, for a particular multimethod,
+  to all legal dispatch values.<br>
+  Not used is method lookup, but may be useful for debugging."
+  
+  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
+  (assert (legal-dispatch-value? x))
+  (assert (legal-dispatch-value? y))
+  (.isA f x y))
+
+(defn isa< 
+  "Extension of `clojure.core/isa?`, for a particular multimethod,
+  to all legal dispatch values."
+  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
+  (assert (legal-dispatch-value? x))
+  (assert (legal-dispatch-value? y))
+  (and (!= x y) (isa<= x y)))
+
+(defn isa>= 
+  "Extension of `clojure.core/isa?`, for a particular multimethod,
+  to all legal dispatch values.<br>
+  Not used is method lookup, but may be useful for debugging."
+  
+  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
+  (assert (legal-dispatch-value? x))
+  (assert (legal-dispatch-value? y))
+  (.isA f y x))
+
+(defn isa> 
+  "Extension of `clojure.core/isa?`, for a particular multimethod,
+  to all legal dispatch values."
+  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
+  (assert (legal-dispatch-value? x))
+  (assert (legal-dispatch-value? y))
+  (and (!= x y) (isa>= x y)))
+
+;;----------------------------------------------------------------
+
+(defn dominates<= 
+  "Transitive extension of [[isa<=]] with pairs created by
+   calls to [[prefer-method]].<br>
+  Not used is method lookup, but may be useful for debugging."
+  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
+  (assert (legal-dispatch-value? x))
+  (assert (legal-dispatch-value? y))
+  (.dominates f x y))
+
+(defn dominates< 
+  "Transitive extension of [[isa<]] with pairs created by
+   calls to [[prefer-method]].<br>
+  Not used is method lookup, but may be useful for debugging."
+  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
+  (assert (legal-dispatch-value? x))
+  (assert (legal-dispatch-value? y))
+  (and (!= x y) (dominates<= x y)))
+
+(defn dominates>= 
+  "Transitive extension of [[isa>=]] with pairs created by
+   calls to [[prefer-method]].<br>
+  Not used is method lookup, but may be useful for debugging."
+  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
+  (assert (legal-dispatch-value? x))
+  (assert (legal-dispatch-value? y))
+  (.dominates f y x))
+
+(defn domainates> 
+  "Transitive extension of [[isa>]] with pairs created by
+   calls to [[prefer-method]].<br>
+  Not used is method lookup, but may be useful for debugging."
+  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
+  (assert (legal-dispatch-value? x))
+  (assert (legal-dispatch-value? y))
+  (and (!= x y) (domainates>= x y)))
+
+;;----------------------------------------------------------------
+;; finally the multimethods
 ;;----------------------------------------------------------------
 (defmacro defmulti
   "Creates a new multimethod 
@@ -203,7 +380,7 @@
 ;;----------------------------------------------------------------
 
 (defmacro defmethod
-
+  
   "Creates and installs a new method for `multifn` associated 
    with `dispatch-value`. Modifies `multifn` destructively.
 
@@ -257,11 +434,12 @@
   replace any existing method, mutating the `MultiFn`
   (rather than creating a new `MultiFn` and re-binding the `Var`
   holding it."
-
+  
   {:added "faster-multimethods 0.0.0"}
   
   [multifn dispatch-val & fn-tail]
   
+  (assert (legal-dispatch-value? dispatch-val))
   `(.addMethod 
      ~(with-meta multifn 
         {:tag 'palisades.lakes.multimethods.java.MultiFn}) 
@@ -271,8 +449,13 @@
   "Removes all of the methods of multimethod.
 
    `palisades.lakes.multimethods.core/remove-all-methods` can only be used 
-   with multimethods
-   defined with `[[palisades.lakes.multimethods.core/defmulti]]`."
+   with multimethods defined with 
+   `[[palisades.lakes.multimethods.core/defmulti]]`.
+
+   **Warning:** despite the name, this actually removes all the 
+   methods, _preferences_, and clears the cache.
+
+   **Warning:** mutates the MutliFn in place."
   
   {:added "faster-multimethods 0.0.0"
    :static true} 
@@ -286,11 +469,15 @@
 
    `palisades.lakes.multimethods.core/remove-method` can only be used 
    with multimethods
-   defined with `palisades.lakes.multimethods.core/defmulti`."
+   defined with `palisades.lakes.multimethods.core/defmulti`.
+
+   **Warning:** mutates the MutliFn in place."
+
   
   {:added {:added "faster-multimethods 0.0.0"}
    :static true}
   [^palisades.lakes.multimethods.java.MultiFn multifn dispatch-val]
+  (assert (legal-dispatch-value? dispatch-val))
   (.removeMethod multifn dispatch-val))
 
 (defn prefer-method
@@ -299,27 +486,32 @@
 
    `palisades.lakes.multimethods.core/prefer-method` can only be used 
    with multimethods
-   defined with `palisades.lakes.multimethods.core/defmulti`."
+   defined with `palisades.lakes.multimethods.core/defmulti`.
+
+   **Warning:** mutates the MutliFn in place."
   
   {:added {:added "faster-multimethods 0.0.0"}
    :static true}
   [^palisades.lakes.multimethods.java.MultiFn multifn dispatch-val-x dispatch-val-y]
+  (assert (legal-dispatch-value? dispatch-val-x))
+  (assert (legal-dispatch-value? dispatch-val-y))
   (.preferMethod multifn dispatch-val-x dispatch-val-y))
 
 (defn methods
+
   "Given a multimethod, returns a map of dispatch values -> dispatch fns.
 
    `palisades.lakes.multimethods.core/methods` can only be used 
    with multimethods
    defined with `palisades.lakes.multimethods.core/defmulti`."
   
-
   {:added "faster-multimethods 0.0.0"
    :static true}
   [^palisades.lakes.multimethods.java.MultiFn multifn] 
   (.getMethodTable multifn))
 
 (defn get-method
+
   "Given a multimethod and a dispatch value, returns the dispatch fn
   that would apply to that value, or nil if none apply and no default.
 
@@ -327,87 +519,24 @@
    with multimethods
    defined with `palisades.lakes.multimethods.core/defmulti`."
   
-
   {:added "faster-multimethods 0.0.0"
    :static true}
   [^palisades.lakes.multimethods.java.MultiFn multifn dispatch-val] 
+  (assert (legal-dispatch-value? dispatch-val))
   (.getMethod multifn dispatch-val))
 
 (defn prefers
-  "Given a multimethod, returns a map of preferred value -> set of other values.
+
+  "Given a multimethod, returns a map of 
+   preferred value -> set of other values.
 
    `palisades.lakes.multimethods.core/prefers` can only be used 
    with multimethods
    defined with `palisades.lakes.multimethods.core/defmulti`."
   
-
   {:added "faster-multimethods 0.0.0"
    :static true}
   [^palisades.lakes.multimethods.java.MultiFn multifn] 
   (.getPreferTable multifn))
 
-;;----------------------------------------------------------------
-
-(defmacro signature 
-  
-  "Return an appropriate implementation of 
-   `Signature` for the `Class` valued arguments
-    (in the arity 1 case, it just returns the `Class` itself).
-
-   **Warning:** `signature` can only be used 
-   as a dispatch function with multimethods
-   defined with [[palisades.lakes.multimethods.core/defmulti]]."
-  
- { :arglists '([^Class c0] 
-                [^Class c0 ^Class c1]
-                [^Class c0 ^Class c1 ^Class c2]
-                [^Class c0 ^Class c1 ^Class c2 & classes])
-  :added "faster-multimethods 0.0.0"}
-  
-  ([c0] `(with-meta c0 {:tag 'Class}))
-  ([c0 c1] 
-    `(palisades.lakes.multimethods.java.Signature2.
-       ~(with-meta c0 {:tag 'Class})
-       ~(with-meta c1 {:tag 'Class})))
-  ([c0 c1 c2] 
-    `(palisades.lakes.multimethods.java.Signature3.
-       ~(with-meta c0 {:tag 'Class})
-       ~(with-meta c1 {:tag 'Class})
-       ~(with-meta c2 {:tag 'Class})))
-  ([c0 c1 c2 & cs] 
-    `(SignatureN.
-       ~(with-meta c0 {:tag 'Class})
-       ~(with-meta c1 {:tag 'Class})
-       ~(with-meta c2 {:tag 'Class})
-       ~(with-meta cs {:tag 'clojure.lang.ArraySeq}))))
-
-(defmacro extract-signature 
-  
-  "Return an appropriate implementation of `Signature` for the
-   arguments, calling `(.getClass xi)` as needed
-   (in the arity 1 case, it returns `(.getClass x0)` itself).
-
-   **Warning:** `extract-signature` can only be used 
-   as a dispatch function with multimethods
-   defined with [[palisades.lakes.multimethods.core/defmulti]]."
-  
- { :arglists '([x0] 
-                [x0 x1]
-                [x0 x1 x2]
-                [x0 x1 x2 & args])
-  :added "faster-multimethods 0.0.0"}
-  
-  ([x0] `(.getClass ~(with-meta x0 {:tag 'Object})))
-  ([x0 x1] 
-    `(palisades.lakes.multimethods.java.Signature2.
-       (.getClass ~(with-meta x0 {:tag 'Object}))
-       (.getClass ~(with-meta x1 {:tag 'Object}))))
-  ([x0 x1 x2] 
-    `(palisades.lakes.multimethods.java.Signature3.
-       (.getClass ~(with-meta x0 {:tag 'Object}))
-       (.getClass ~(with-meta x1 {:tag 'Object}))
-       (.getClass ~(with-meta x2 {:tag 'Object}))))
-  ([x0 x1 x2 & xs] 
-    `(SignatureN/extract 
-       ~x0 ~x1 ~x2 ~with-meta xs {:tag 'clojure.lang.ArraySeq})))
 ;;----------------------------------------------------------------

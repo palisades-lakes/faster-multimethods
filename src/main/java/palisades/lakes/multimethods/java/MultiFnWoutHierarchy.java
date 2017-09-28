@@ -59,7 +59,7 @@ import clojure.lang.Var;
  *
  * @author palisades dot lakes at gmail dot com
  * @since 2017-06-20
- * @version 2017-09-22
+ * @version 2017-09-27
  */
 @SuppressWarnings("unchecked")
 public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
@@ -87,11 +87,11 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   //--------------------------------------------------------------
 
   @Override
-  public IPersistentMap getMethodTable () {
+  public final IPersistentMap getMethodTable () {
     return PersistentHashMap.create(methodTable); }
 
   @Override
-  public IPersistentMap getPreferTable () {
+  public final IPersistentMap getPreferTable () {
     // convert values to IPersistentSet
     final Set ks = preferTable.keySet();
     final Object[] kvs = new Object[2 * ks.size()];
@@ -105,7 +105,7 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   //--------------------------------------------------------------
 
   @Override
-  public MultiFn reset () {
+  public final MultiFn reset () {
     rw.writeLock().lock();
     try {
       methodTable = Collections.emptyMap();
@@ -146,7 +146,7 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   //--------------------------------------------------------------
 
   @Override
-  public MultiFn addMethod (final Object dispatch,
+  public final MultiFn addMethod (final Object dispatch,
                             final IFn method) {
     rw.writeLock().lock();
     try {
@@ -156,7 +156,7 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
     finally { rw.writeLock().unlock(); } }
 
   @Override
-  public MultiFn removeMethod (final Object dispatch) {
+  public final MultiFn removeMethod (final Object dispatch) {
     rw.writeLock().lock();
     try {
       methodTable = dissoc(methodTable,dispatch);
@@ -170,9 +170,9 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
 
   private static final Var parents = RT.var("clojure.core","parents");
 
-  private boolean prefers (final Object x, 
+  private final boolean prefers (final Object x, 
                            final Object y) {
-    
+
     final Set xprefs = (Set) preferTable.get(x);
 
     if (xprefs != null) {
@@ -205,7 +205,7 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   //--------------------------------------------------------------
 
   @Override
-  public MultiFn preferMethod (final Object dispatchX,
+  public final MultiFn preferMethod (final Object dispatchX,
                                final Object dispatchY) {
     rw.writeLock().lock();
     try {
@@ -233,16 +233,17 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
                                     final Signature parent) {
     return parent.isAssignableFrom(child); }
 
-  private static final boolean isA (final IPersistentVector child,
-                                    final IPersistentVector parent) {
+  private final boolean isA (final IPersistentVector child,
+                             final IPersistentVector parent) {
     final int n = child.length();
     if (n != parent.length()) { return false; }
     for (int i = 0; i < n; i++) {
       if (!isA(child.nth(i),parent.nth(i))) { return false; } }
     return true; } 
 
-  private static final boolean isA (final Object child,
-                                    final Object parent) {
+  @Override
+  public final boolean isA (final Object child,
+                            final Object parent) {
 
     if (child.equals(parent)) { return true; }
 
@@ -263,13 +264,14 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
 
   //--------------------------------------------------------------
 
-  private boolean dominates (final Object x, 
-                             final Object y) {
+  @Override
+  public final boolean dominates (final Object x, 
+                                  final Object y) {
     return prefers(x,y) || isA(x,y); }
 
   //--------------------------------------------------------------
 
-  private Map resetCache () {
+  private final Map resetCache () {
     rw.writeLock().lock();
     try {
       methodCache = methodTable;
@@ -289,11 +291,11 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
       if (! dominates(k0,k)) { updated.add(e); } } 
     if (add) { updated.add(e0); }
     return updated; }
-  
+
   private static final Map.Entry first (final Set<Map.Entry> i) {
     return i.iterator().next(); }
-  
-  private IFn findAndCacheBestMethod (final Object dispatch) {
+
+  private final IFn findAndCacheBestMethod (final Object dispatch) {
     rw.readLock().lock();
     Object bestValue;
     final Map mt = methodTable;
@@ -330,12 +332,12 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   //--------------------------------------------------------------
 
   @Override
-  public IFn getMethod (final Object dispatch) {
+  public final IFn getMethod (final Object dispatch) {
     final IFn targetFn = (IFn) methodCache.get(dispatch);
     if (targetFn != null) { return targetFn; }
     return findAndCacheBestMethod(dispatch); }
 
-  private IFn getFn (final Object dispatch) {
+  private final IFn getFn (final Object dispatch) {
     final IFn targetFn = getMethod(dispatch);
     if (targetFn == null) { 
       throw new IllegalArgumentException(

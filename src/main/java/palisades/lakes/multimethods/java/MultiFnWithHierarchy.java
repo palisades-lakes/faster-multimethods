@@ -105,11 +105,11 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
   //--------------------------------------------------------------
 
   @Override
-  public IPersistentMap getMethodTable () {
+  public final IPersistentMap getMethodTable () {
     return PersistentHashMap.create(methodTable); }
 
   @Override
-  public IPersistentMap getPreferTable () {
+  public final IPersistentMap getPreferTable () {
     // convert values to IPersistentSet
     final Set ks = preferTable.keySet();
     final Object[] kvs = new Object[2 * ks.size()];
@@ -123,7 +123,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
   //--------------------------------------------------------------
 
   @Override
-  public MultiFn reset () {
+  public final MultiFn reset () {
     rw.writeLock().lock();
     try {
       methodTable = Collections.emptyMap();
@@ -165,7 +165,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
   //--------------------------------------------------------------
 
   @Override
-  public MultiFn addMethod (final Object dispatch,
+  public final MultiFn addMethod (final Object dispatch,
                             final IFn method) {
     rw.writeLock().lock();
     try {
@@ -175,7 +175,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
     finally { rw.writeLock().unlock(); } }
 
   @Override
-  public MultiFn removeMethod (final Object dispatch) {
+  public final MultiFn removeMethod (final Object dispatch) {
     rw.writeLock().lock();
     try {
       methodTable = dissoc(methodTable,dispatch);
@@ -187,7 +187,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
 
   private static final Var parents = RT.var("clojure.core","parents");
 
-  private boolean prefers (final Map hierarky,
+  private final boolean prefers (final Map hierarky,
                            final Object x, 
                            final Object y) {
 
@@ -225,7 +225,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
   //--------------------------------------------------------------
 
   @Override
-  public MultiFn preferMethod (final Object dispatchX,
+  public final MultiFn preferMethod (final Object dispatchX,
                                final Object dispatchY) {
     rw.writeLock().lock();
     try {
@@ -323,16 +323,25 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
         (IPersistentVector) parent); }
     return false; }
 
+  @Override
+  public final boolean isA (final Object x,
+                            final Object y) {
+    return isA((Map) hierarchy,x,y); }
+  
   //--------------------------------------------------------------
 
-  private boolean dominates (final Map hierarky,
+  private final boolean dominates (final Map hierarky,
                              final Object x, 
                              final Object y) {
     return prefers(hierarky,x,y) || isA(hierarky,x,y); }
 
+  @Override
+  public final boolean dominates (final Object x, 
+                                  final Object y) {
+    return dominates((Map) hierarchy,x,y); }
   //--------------------------------------------------------------
 
-  private Map resetCache () {
+  private final Map resetCache () {
     rw.writeLock().lock();
     try {
       methodCache = methodTable;
@@ -358,7 +367,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
   private static final Map.Entry first (final Set<Map.Entry> i) {
     return i.iterator().next(); }
   
-  private IFn findAndCacheBestMethod (final Object dispatch) {
+  private final IFn findAndCacheBestMethod (final Object dispatch) {
     rw.readLock().lock();
     Object bestValue;
     final Map mt = methodTable;
@@ -400,13 +409,13 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
   //--------------------------------------------------------------
 
   @Override
-  public IFn getMethod (final Object dispatch) {
+  public final IFn getMethod (final Object dispatch) {
     if(cachedHierarchy != hierarchy.deref()) { resetCache(); }
     final IFn targetFn = (IFn) methodCache.get(dispatch);
     if (targetFn != null) { return targetFn; }
     return findAndCacheBestMethod(dispatch); }
 
-  private IFn getFn (final Object dispatch) {
+  private final IFn getFn (final Object dispatch) {
     final IFn targetFn = getMethod(dispatch);
     if (targetFn == null) { 
       throw new IllegalArgumentException(

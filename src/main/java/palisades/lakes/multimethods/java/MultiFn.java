@@ -8,14 +8,16 @@ import clojure.lang.IPersistentMap;
  *
  * @author palisades dot lakes at gmail dot com
  * @since 2017-07-16
- * @version 2017-07-27
+ * @version 2017-09-27
  */
 @SuppressWarnings("unchecked")
 public interface MultiFn extends IFn {
- 
+
+  public boolean isA (final Object x, final Object y);
+  public boolean dominates (final Object x, final Object y);
   public MultiFn reset();
   public MultiFn addMethod (final Object dispatchVal, 
-                             final IFn method);
+                            final IFn method);
 
   public MultiFn removeMethod (final Object dispatchVal);
 
@@ -27,5 +29,5 @@ public interface MultiFn extends IFn {
   public IPersistentMap getMethodTable ();
 
   public IPersistentMap getPreferTable();
-  
+
 }
