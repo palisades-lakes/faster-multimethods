@@ -60,15 +60,44 @@ Clojure collections would make this little library unnecessary.
     Removing the need for synchronizing with the `hierarchy`,
     further reduces the overhead.
     
-### pemantic changes
+### semantic changes
 
 The current implementation is not quite backwards compatible with 
-Clojure 1.8.0, because it fixes 4 issues with how the preferred
-method is found.
+Clojure 1.8.0, because it fixes 2 issues with `defmulti/defmethod`
+and 4 issues with how the preferred method is found.
+
+1. `defmethod` accepts keywords as dispatch values that aren't 
+namespace qualified, 
+ones where `clojure.core/derive` would throw an exception: 
+[basic-multimethod-test](https://github.com/clojure/clojure/blob/master/test/clojure/test_clojure/multimethods.clj#L161).
+This affects the default dispatch value `:default`,
+which for now is handled as a special case.
+I'm tempted to replace it with `:clojure.core\default`, or 
+something like that, but that would mean an extra step for 
+converting code from Clojure multimethods to faster-multimethods.
+
+2. `:default`, which is not namespace qualified, is used to define
+a default method, which is called when there are no applicable methods.
+But the default method will also be called if the dispatch
+function returns `:default`.
+
+    I suspect having a special fallback default method is an unnecessary
+complication, and likely to hide simple coding errors,
+especially since `defmulti` permits specifying something other
+than `:default` as the no-applicable-methods key.
+Also, if there is a special no-applicable-methods method, 
+it ought not to be entangled with the hierarchy- and class-based
+method lookup. 
+
+    Despite my reservations, I'm leaving the implementation
+    as is at present, except that only namespace-qualified
+    symbols or keywords may be supplied as alternatives to
+    `:default` in `defmulti`.
+
+4 issues with [MultiFn.dominates](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L126):
 
 The first issue is pretty clearly a bug, the remaining might be
 attributed to different expectations for how the 
-[dominates](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L126)
 partial ordering should behave.
 
 1. [MultiFn.prefers()](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105)

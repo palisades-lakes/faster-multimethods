@@ -13,6 +13,9 @@ fully dynamic.
 - [change history](changes.md),
 including differences from Clojure 1.8.0
 
+- [method lookup](lookup.md),
+details about dispatch values, partial ordering, and method lookup.
+
 - [javadoc](javadoc/index.html)
 
 ## dependency 

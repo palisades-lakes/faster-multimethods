@@ -41,7 +41,7 @@ doesn't validate dispatch values before method lookup.
 Instead, a possibly mysterious looking exception will be thrown
 some time later.
 You can use `palisades.lakes.multimethods\legal-dispatch-value?`
-in your dispatch function, permanently if you can afford to cost,
+in your dispatch function, permanently if you can afford the cost,
 or at least in unit tests, and during development or debugging.)
     
 ## legal dispatch values
@@ -52,6 +52,12 @@ Legal dispatch values are one of (my terminology):
 
     - an instance of `Class`.
     - a namespace-qualified instance of `Named` (a `Symbol` or `Keyword`).
+
+- `:default`: a special case of a non-namespace-qualified
+keyword, for consistency with Clojure 1.8.0. Used to define
+a default method which is called when there are no other applicable
+methods. Dispatch functions may return `:default` to short cut
+method lookup.
 
 - _recursive_  
 
