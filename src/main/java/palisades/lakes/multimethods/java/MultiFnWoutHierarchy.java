@@ -157,7 +157,7 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   @Override
   public final MultiFn addMethod (final Object x,
                                   final IFn method) {
-    assert isLegalDispatchValue(x) : "not legal:" + x;
+    checkLegalDispatchValue(x);
     rw.writeLock().lock();
     try {
       methodTable = assoc(methodTable,x,method);
@@ -167,7 +167,7 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
 
   @Override
   public final MultiFn removeMethod (final Object x) {
-    assert isLegalDispatchValue(x) : "not legal:" + x;
+    checkLegalDispatchValue(x);
     rw.writeLock().lock();
     try {
       methodTable = dissoc(methodTable,x);
@@ -218,8 +218,8 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   @Override
   public final MultiFn preferMethod (final Object x,
                                      final Object y) {
-    assert isLegalDispatchValue(x) : "not legal:" + x;
-    assert isLegalDispatchValue(y) : "not legal:" + y;
+    checkLegalDispatchValue(x);
+    checkLegalDispatchValue(y);
     rw.writeLock().lock();
     try {
       if (prefers(y,

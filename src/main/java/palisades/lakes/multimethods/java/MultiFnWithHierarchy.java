@@ -88,26 +88,6 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
 
   //--------------------------------------------------------------
 
-  public MultiFnWithHierarchy (final String n, 
-                               final IFn dispatchF, 
-                               final Object defaultd, 
-                               final IRef hierarky) {
-    rw = new ReentrantReadWriteLock();
-    assert (null != n) && (! n.isEmpty());
-    name = n;
-    assert null != dispatchF;
-    dispatchFn = dispatchF;
-    methodTable = Collections.emptyMap();
-    methodCache = Collections.emptyMap();
-    preferTable = Collections.emptyMap();
-    // can be null?
-    defaultDispatch = defaultd;
-    assert null != hierarky;
-    hierarchy = hierarky;
-    cachedHierarchy = null; }
-
-  //--------------------------------------------------------------
-
   private static final Var namespace = 
     RT.var("clojure.core","namespace");
 
@@ -139,6 +119,28 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
       isAtomicDispatchValue(x) || 
       (x instanceof Signature) || 
       isRecursiveDispatchValue(x); }
+
+  //--------------------------------------------------------------
+
+  public MultiFnWithHierarchy (final String n, 
+                               final IFn dispatchF, 
+                               final Object defaultd, 
+                               final IRef hierarky) {
+    rw = new ReentrantReadWriteLock();
+    assert (null != n) && (! n.isEmpty());
+    name = n;
+    assert null != dispatchF;
+    dispatchFn = dispatchF;
+    methodTable = Collections.emptyMap();
+    methodCache = Collections.emptyMap();
+    preferTable = Collections.emptyMap();
+    // can be null?
+    checkLegalDispatchValue(defaultd);
+      
+    defaultDispatch = defaultd;
+    assert null != hierarky;
+    hierarchy = hierarky;
+    cachedHierarchy = null; }
 
   //--------------------------------------------------------------
 
@@ -205,7 +207,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
   @Override
   public final MultiFn addMethod (final Object x,
                                   final IFn method) {
-    assert isLegalDispatchValue(x) : "not legal:" + x;
+    checkLegalDispatchValue(x);
     rw.writeLock().lock();
     try {
       methodTable = assoc(methodTable,x,method);
@@ -215,7 +217,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
 
   @Override
   public final MultiFn removeMethod (final Object x) {
-    assert isLegalDispatchValue(x) : "not legal:" + x;
+    checkLegalDispatchValue(x);
     rw.writeLock().lock();
     try {
       methodTable = dissoc(methodTable,x);
@@ -267,8 +269,9 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
   @Override
   public final MultiFn preferMethod (final Object x,
                                      final Object y) {
-    assert isLegalDispatchValue(x) : "not legal:" + x;
-    assert isLegalDispatchValue(y) : "not legal:" + y;
+    // TODO: check that x and y have the same shape if recursive?
+    checkLegalDispatchValue(x);
+    checkLegalDispatchValue(y);
     rw.writeLock().lock();
     try {
       if (prefers(cachedHierarchy,y,x)) { 

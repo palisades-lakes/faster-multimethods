@@ -6,10 +6,11 @@
   {:doc "Faster multimethod method lookup."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-06-02"
-   :version "2017-09-28"}
+   :version "2017-10-06"}
   (:refer-clojure :exclude [defmulti defmethod remove-all-methods
                             remove-method prefer-method methods
-                            get-method prefers]))
+                            get-method prefers])
+  (:import [palisades.lakes.multimethods.java MultiFn]))
 ;;----------------------------------------------------------------
 
 (defmacro signature 
@@ -82,40 +83,76 @@
   [v] 
   (instance? palisades.lakes.multimethods.java.Signature v))   
 ;;----------------------------------------------------------------
-;; dispatch value validation
+;; dispatch value partial orderings
+;; for testing/debugging, not used in method lookup
 ;;----------------------------------------------------------------
-(defn- atomic-dispatch-value? 
-  "Is `v` an atomic dispatch value (ie a `Class` or a
-   namespace-qualified instance of `Named`, concretely,
-   a namespace-qualified `Symbol` or `Keyword`)?"
+
+(defn isa<= 
+  "Extension of `clojure.core/isa?`, for a particular multimethod,
+  to all legal dispatch values.<br>
+  Not used is method lookup, but may be useful for debugging."
   {:added "faster-multimethods 0.0.8"}
-  [v]
-  (or (class? v)
-      (and (instance? clojure.lang.Named v) 
-           (namespace v))
-      (= :default v)))
+  [^MultiFn multifn x y]
+  (.isA multifn x y))
 
-(defn- recursive-dispatch-value? 
-  "Is `v` a recursive dispatch value (ie a vector whose elements
-   are atomic or recurswive dispatch values)?"
+(defn isa< 
+  "Extension of `clojure.core/isa?`, for a particular multimethod,
+  to all legal dispatch values."
   {:added "faster-multimethods 0.0.8"}
-  [v]
-  (and (vector? v)
-       (every? #(or (atomic-dispatch-value? %)
-                    (recursive-dispatch-value? %))
-               v)))
+  [^MultiFn multifn x y]
+  (and (not= x y) (isa<= multifn x y)))
 
-(defn legal-dispatch-value?
-  "Is `v` a legal dispatch value?"
-    {:added "faster-multimethods 0.0.8"}
-[v]
-  (or (atomic-dispatch-value? v)
-      (signature? v)
-      (recursive-dispatch-value? v)))
+(defn isa>= 
+  "Extension of `clojure.core/isa?`, for a particular multimethod,
+  to all legal dispatch values.<br>
+  Not used is method lookup, but may be useful for debugging."
+  {:added "faster-multimethods 0.0.8"}
+  [^MultiFn multifn x y]
+  (.isA multifn y x))
 
-(defn- assert-legal [v]
-  (assert (legal-dispatch-value? v)
-          (print-str "not legal:" v)))
+(defn isa> 
+  "Extension of `clojure.core/isa?`, for a particular multimethod,
+  to all legal dispatch values."
+  {:added "faster-multimethods 0.0.8"}
+  [^MultiFn multifn x y]
+  (and (not= x y) (isa>= multifn x y)))
+
+;;----------------------------------------------------------------
+
+(defn dominates<= 
+  "Transitive extension of [[isa<=]] with pairs created by
+   calls to [[prefer-method]].<br>
+  Not used is method lookup, but may be useful for debugging."
+  {:added "faster-multimethods 0.0.8"}
+  [^MultiFn multifn x y]
+  (.dominates multifn x y))
+
+(defn dominates< 
+  "Transitive extension of [[isa<]] with pairs created by
+   calls to [[prefer-method]].<br>
+  Not used is method lookup, but may be useful for debugging."
+  {:added "faster-multimethods 0.0.8"}
+  [^MultiFn multifn x y]
+  (and (not= x y) (dominates<= multifn x y)))
+
+(defn dominates>= 
+  "Transitive extension of [[isa>=]] with pairs created by
+   calls to [[prefer-method]].<br>
+  Not used is method lookup, but may be useful for debugging."
+  {:added "faster-multimethods 0.0.8"}
+  [^MultiFn multifn x y]
+  (.dominates multifn y x))
+
+(defn dominates> 
+  "Transitive extension of [[isa>]] with pairs created by
+   calls to [[prefer-method]].<br>
+  Not used is method lookup, but may be useful for debugging."
+  {:added "faster-multimethods 0.0.8"}
+  [^MultiFn multifn x y]
+  (and (not= x y) (dominates>= multifn x y)))
+
+;;----------------------------------------------------------------
+;; finally the multimethods
 ;;----------------------------------------------------------------
 (defn- check-valid-options
   "Throws an exception if the given option map contains keys not listed
@@ -127,100 +164,7 @@
         ^String
         (apply str "Only these options are valid: "
                (first valid-keys)
-               (map #(str ", " %) (rest valid-keys))))))
-  (if (and (not (:hierarchy options)) (:default options))
-    (throw
-      (IllegalArgumentException.
-        (str ":hierarchy is" (:hierarchy options)
-             ", which means truthy :default ("
-             (:default options) ") is not allowed.")))))
-;;----------------------------------------------------------------
-;; dispatch value partial orderings
-;; for testing/debugging, not used in method lookup
-;;----------------------------------------------------------------
-
-(defn isa<= 
-  "Extension of `clojure.core/isa?`, for a particular multimethod,
-  to all legal dispatch values.<br>
-  Not used is method lookup, but may be useful for debugging."
-  {:added "faster-multimethods 0.0.8"}
-  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
-  (assert-legal x)
-  (assert-legal y)
-  (.isA multifn x y))
-
-(defn isa< 
-  "Extension of `clojure.core/isa?`, for a particular multimethod,
-  to all legal dispatch values."
-  {:added "faster-multimethods 0.0.8"}
-  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
-  (assert-legal x)
-  (assert-legal y)
-  (and (not= x y) (isa<= multifn x y)))
-
-(defn isa>= 
-  "Extension of `clojure.core/isa?`, for a particular multimethod,
-  to all legal dispatch values.<br>
-  Not used is method lookup, but may be useful for debugging."
-  {:added "faster-multimethods 0.0.8"}
-  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
-  (assert-legal x)
-  (assert-legal y)
-  (.isA multifn y x))
-
-(defn isa> 
-  "Extension of `clojure.core/isa?`, for a particular multimethod,
-  to all legal dispatch values."
-  {:added "faster-multimethods 0.0.8"}
-  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
-  (assert-legal x)
-  (assert-legal y)
-  (and (not= x y) (isa>= multifn x y)))
-
-;;----------------------------------------------------------------
-
-(defn dominates<= 
-  "Transitive extension of [[isa<=]] with pairs created by
-   calls to [[prefer-method]].<br>
-  Not used is method lookup, but may be useful for debugging."
-  {:added "faster-multimethods 0.0.8"}
-  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
-  (assert-legal x)
-  (assert-legal y)
-  (.dominates multifn x y))
-
-(defn dominates< 
-  "Transitive extension of [[isa<]] with pairs created by
-   calls to [[prefer-method]].<br>
-  Not used is method lookup, but may be useful for debugging."
-  {:added "faster-multimethods 0.0.8"}
-  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
-  (assert-legal x)
-  (assert-legal y)
-  (and (not= x y) (dominates<= multifn x y)))
-
-(defn dominates>= 
-  "Transitive extension of [[isa>=]] with pairs created by
-   calls to [[prefer-method]].<br>
-  Not used is method lookup, but may be useful for debugging."
-  {:added "faster-multimethods 0.0.8"}
-  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
-  (assert-legal x)
-  (assert-legal y)
-  (.dominates multifn y x))
-
-(defn dominates> 
-  "Transitive extension of [[isa>]] with pairs created by
-   calls to [[prefer-method]].<br>
-  Not used is method lookup, but may be useful for debugging."
-  {:added "faster-multimethods 0.0.8"}
-  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
-  (assert-legal x)
-  (assert-legal y)
-  (and (not= x y) (dominates>= multifn x y)))
-
-;;----------------------------------------------------------------
-;; finally the multimethods
+               (map #(str ", " %) (rest valid-keys)))))))
 ;;----------------------------------------------------------------
 (defmacro defmulti
   "Creates a new multimethod 
@@ -330,7 +274,10 @@
     (let [options   (apply hash-map options)
           hierarchy (get options :hierarchy #'clojure.core/global-hierarchy)
           default   (get options :default (if hierarchy :default nil))]
-      (or (nil? default) (= :default default) (assert-legal default))
+      (assert (or hierarchy (nil? default))
+              (pr-str 
+                "can't supply a default dispatch value with no hierarchy:"
+                default))
       (check-valid-options options :default :hierarchy)
       (if hierarchy
         `(let [v# (def ~mm-name)]
@@ -360,22 +307,22 @@
      signatures are only intended to support single arity method
      functions.
 
-  **Note:** unlike [[defmulti]], 
-  re-evaluating [[defmethod]] will
-  replace any existing method for `v`, mutating `multifn`."
+  **Note:** unlike [[defmulti]], re-evaluating [[defmethod]] will
+  replace any existing method for `v`, mutating `multifn`.
+
+  Throws an exception if `v` is not a legal dispatch value for
+  `multifn`."
   
   {:added "faster-multimethods 0.0.0"}
   
   [multifn v & fn-tail]
   
   
-  `(do
-     (#'assert-legal ~v)
-     (.addMethod 
-       ~(with-meta multifn 
-          {:tag 'palisades.lakes.multimethods.java.MultiFn}) 
-       ~v
-       (fn ~multifn ~@fn-tail))))
+  `(.addMethod 
+     ~(with-meta multifn 
+        {:tag 'palisades.lakes.multimethods.java.MultiFn}) 
+     ~v
+     (fn ~multifn ~@fn-tail)))
 
 ;;----------------------------------------------------------------
 
@@ -395,7 +342,7 @@
   {:added "faster-multimethods 0.0.0"
    :static true} 
   
-  [^palisades.lakes.multimethods.java.MultiFn multifn]
+  [^MultiFn multifn]
   
   (.reset multifn))
 
@@ -408,32 +355,36 @@
    with multimethods
    defined with [[palisades.lakes.multimethods.core/defmulti]].
 
-   **Warning:** mutates `multifn`."
+   **Warning:** mutates `multifn`.
 
+   Throws an exception if `v` is not  legal dispatch value
+   for `multifn`."
   
   {:added {:added "faster-multimethods 0.0.0"}
    :static true}
-  [^palisades.lakes.multimethods.java.MultiFn multifn v]
-  (assert-legal v)
+  [^MultiFn multifn v]
+
   (.removeMethod multifn v))
 
 ;;----------------------------------------------------------------
 
 (defn prefer-method
+  
   "Causes the multimethod to prefer matches of `x` over `y` 
    when there is a conflict.
 
-   [[prefer-method]] can only be used 
-   with multimethods
+   [[prefer-method]] can only be used with multimethods
    defined with [[palisades.lakes.multimethods.core/defmulti]].
 
-   **Warning:** mutates `multifn`."
+   **Warning:** mutates `multifn`.
+
+   Throws exception if `x` and `y` are not legal dispatch values
+   for `multifn`."
   
-  {:added {:added "faster-multimethods 0.0.0"}
-   :static true}
-  [^palisades.lakes.multimethods.java.MultiFn multifn x y]
-  (assert-legal x)
-  (assert-legal y)
+  {:added {:added "faster-multimethods 0.0.0"} :static true}
+  
+  [^MultiFn multifn x y]
+  
   (.preferMethod multifn x y))
 
 ;;----------------------------------------------------------------
@@ -442,13 +393,13 @@
 
   "Given a multimethod, returns a map of dispatch values -> dispatch fns.
 
-   [[methods]] can only be used 
-   with multimethods
+   [[methods]] can only be used with multimethods
    defined with [[palisades.lakes.multimethods.core/defmulti]]."
   
   {:added "faster-multimethods 0.0.0"
    :static true}
-  [^palisades.lakes.multimethods.java.MultiFn multifn] 
+  [^MultiFn multifn] 
+  
   (.getMethodTable multifn))
 
 ;;----------------------------------------------------------------
@@ -458,14 +409,16 @@
   "Given a multimethod and a dispatch value, returns the dispatch fn
   that would apply to that value, or nil if none apply and no default.
 
-   [[get-method]] can only be used 
-   with multimethods
-   defined with [[palisades.lakes.multimethods.core/defmulti]]."
+   [[get-method]] can only be used with multimethods
+   defined with [[palisades.lakes.multimethods.core/defmulti]].
+
+   Does NOT throw an exception if `v` is an illegal dispatch value
+   for `multifn`; returns `nil` in that case."
   
   {:added "faster-multimethods 0.0.0"
    :static true}
-  [^palisades.lakes.multimethods.java.MultiFn multifn v] 
-  (assert-legal v)
+  [^MultiFn multifn v] 
+ 
   (.getMethod multifn v))
 
 ;;----------------------------------------------------------------
@@ -481,7 +434,8 @@
   
   {:added "faster-multimethods 0.0.0"
    :static true}
-  [^palisades.lakes.multimethods.java.MultiFn multifn] 
+  [^MultiFn multifn] 
+
   (.getPreferTable multifn))
 
 ;;----------------------------------------------------------------

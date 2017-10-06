@@ -6,7 +6,7 @@
   {:doc "prefers transitivity with signature dispatch and no hierarchy."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-09-14"
-   :version "2017-09-14"}
+   :version "2017-10-06"}
   (:require [clojure.test :as test]
             [palisades.lakes.multimethods.core :as d]
             [palisades.lakes.multimethods.test.classes])
@@ -40,8 +40,8 @@
     [x0 x1] 
     [(d/signature C0 C1) (d/extract-signature x0 x1)])
   (d/prefer-method transitive2 
-                    (d/signature A0 A1) 
-                    (d/signature B0 B1))
+                   (d/signature A0 A1) 
+                   (d/signature B0 B1))
   (test/is (= [(d/signature C0 C1) (d/signature D0 D1)]
               (transitive2 (D0.) (D1.)))))
 ;;----------------------------------------------------------------

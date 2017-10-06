@@ -18,6 +18,14 @@ public interface MultiFn extends IFn {
    */
   public boolean isLegalDispatchValue (final Object x);
 
+  /** Throw an <code>IllegalArgumentException</code> if 
+   * <code>x</code> is not a legal dispatch value for this
+   * <code>MultiFn</code>.
+   */
+  public default void checkLegalDispatchValue (final Object x) {
+    if (! isLegalDispatchValue(x)) {
+      throw new IllegalArgumentException("not legal:" + x); } }
+
   /** Are methods defined for <code>y</code> applicable to
    * <code>x</code>?
    */
