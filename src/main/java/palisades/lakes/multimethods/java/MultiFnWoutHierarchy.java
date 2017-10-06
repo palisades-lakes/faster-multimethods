@@ -46,6 +46,9 @@ import clojure.lang.Var;
  * implies <code>(prefer-method x y)</code>
  * which make no sense to me. 
  * 
+ * 3) Check for legal dispatch value in add-method and 
+ * prefer-method.
+ * 
  * Performance changes to clojure.lang.MultiFn.
  *
  * 1) Replace persistent data structures with simple
@@ -59,7 +62,7 @@ import clojure.lang.Var;
  *
  * @author palisades dot lakes at gmail dot com
  * @since 2017-06-20
- * @version 2017-09-27
+ * @version 2017-10-06
  */
 @SuppressWarnings("unchecked")
 public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
@@ -83,6 +86,12 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
     methodTable = Collections.emptyMap();
     methodCache = Collections.emptyMap();
     preferTable = Collections.emptyMap(); }
+
+  //--------------------------------------------------------------
+
+  @Override
+  public final boolean isLegalDispatchValue (final Object x) {
+    return (x instanceof Class) || (x instanceof Signature); }
 
   //--------------------------------------------------------------
 
@@ -146,20 +155,22 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   //--------------------------------------------------------------
 
   @Override
-  public final MultiFn addMethod (final Object dispatch,
-                            final IFn method) {
+  public final MultiFn addMethod (final Object x,
+                                  final IFn method) {
+    assert isLegalDispatchValue(x) : "not legal:" + x;
     rw.writeLock().lock();
     try {
-      methodTable = assoc(methodTable,dispatch,method);
+      methodTable = assoc(methodTable,x,method);
       resetCache();
       return this; }
     finally { rw.writeLock().unlock(); } }
 
   @Override
-  public final MultiFn removeMethod (final Object dispatch) {
+  public final MultiFn removeMethod (final Object x) {
+    assert isLegalDispatchValue(x) : "not legal:" + x;
     rw.writeLock().lock();
     try {
-      methodTable = dissoc(methodTable,dispatch);
+      methodTable = dissoc(methodTable,x);
       resetCache();
       return this; }
     finally { rw.writeLock().unlock(); } }
@@ -171,7 +182,7 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   private static final Var parents = RT.var("clojure.core","parents");
 
   private final boolean prefers (final Object x, 
-                           final Object y) {
+                                 final Object y) {
 
     final Set xprefs = (Set) preferTable.get(x);
 
@@ -205,17 +216,19 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   //--------------------------------------------------------------
 
   @Override
-  public final MultiFn preferMethod (final Object dispatchX,
-                               final Object dispatchY) {
+  public final MultiFn preferMethod (final Object x,
+                                     final Object y) {
+    assert isLegalDispatchValue(x) : "not legal:" + x;
+    assert isLegalDispatchValue(y) : "not legal:" + y;
     rw.writeLock().lock();
     try {
-      if (prefers(dispatchY,
-        dispatchX)) { throw new IllegalStateException(
+      if (prefers(y,
+        x)) { throw new IllegalStateException(
           String.format(
             "Preference conflict in multimethod '%s':" +
               "%s is already preferred to %s",
-              name,dispatchY,dispatchX)); }
-      preferTable = add(preferTable,dispatchX,dispatchY);
+              name,y,x)); }
+      preferTable = add(preferTable,x,y);
       resetCache();
       return this; }
     finally { rw.writeLock().unlock(); } }
@@ -332,10 +345,10 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   //--------------------------------------------------------------
 
   @Override
-  public final IFn getMethod (final Object dispatch) {
-    final IFn targetFn = (IFn) methodCache.get(dispatch);
+  public final IFn getMethod (final Object x) {
+    final IFn targetFn = (IFn) methodCache.get(x);
     if (targetFn != null) { return targetFn; }
-    return findAndCacheBestMethod(dispatch); }
+    return findAndCacheBestMethod(x); }
 
   private final IFn getFn (final Object dispatch) {
     final IFn targetFn = getMethod(dispatch);

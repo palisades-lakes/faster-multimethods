@@ -30,6 +30,7 @@ import clojure.lang.IPersistentVector;
 import clojure.lang.IRef;
 import clojure.lang.ISeq;
 import clojure.lang.Keyword;
+import clojure.lang.Named;
 import clojure.lang.PersistentHashMap;
 import clojure.lang.PersistentHashSet;
 import clojure.lang.RT;
@@ -56,6 +57,9 @@ import clojure.lang.Var;
  * Changed to explicitly use the local hierarchy in preference
  * evaluation.
  * 
+ * 4) Check for legal dispatch value in add-method and 
+ * prefer-method.
+ * 
  * Performance changes to clojure.lang.MultiFn.
  *
  * 1) Replace persistent data structures with simple
@@ -67,7 +71,7 @@ import clojure.lang.Var;
  *
  * @author palisades dot lakes at gmail dot com
  * @since 2017-06-20
- * @version 2017-09-22
+ * @version 2017-10-06
  */
 @SuppressWarnings("unchecked")
 public final class MultiFnWithHierarchy extends AFn implements MultiFn {
@@ -101,6 +105,40 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
     assert null != hierarky;
     hierarchy = hierarky;
     cachedHierarchy = null; }
+
+  //--------------------------------------------------------------
+
+  private static final Var namespace = 
+    RT.var("clojure.core","namespace");
+
+  private static final Var keyword = 
+    RT.var("clojure.core","keyword");
+
+  private static final Keyword kdefault = 
+    (Keyword) keyword.invoke("default");
+
+  private static final boolean isAtomicDispatchValue (final Object x) {
+    return
+      (x instanceof Class) || 
+      ((x instanceof Named) && 
+        (null != namespace.invoke(x))) ||
+      kdefault.equals(x); }
+
+  private static final boolean isRecursiveDispatchValue (final Object x) {
+    if (! (x instanceof IPersistentVector)) { return false; }
+    final IPersistentVector v = (IPersistentVector) x;
+    final int n = v.count();
+    for (int i=0; i<n; i++) {
+      final Object vi = v.nth(i);
+      if (! (isAtomicDispatchValue(vi) || isRecursiveDispatchValue(vi))) {
+        return false; } }
+    return true; }
+  @Override
+  public final boolean isLegalDispatchValue (final Object x) {
+    return
+      isAtomicDispatchValue(x) || 
+      (x instanceof Signature) || 
+      isRecursiveDispatchValue(x); }
 
   //--------------------------------------------------------------
 
@@ -165,20 +203,22 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
   //--------------------------------------------------------------
 
   @Override
-  public final MultiFn addMethod (final Object dispatch,
-                            final IFn method) {
+  public final MultiFn addMethod (final Object x,
+                                  final IFn method) {
+    assert isLegalDispatchValue(x) : "not legal:" + x;
     rw.writeLock().lock();
     try {
-      methodTable = assoc(methodTable,dispatch,method);
+      methodTable = assoc(methodTable,x,method);
       resetCache();
       return this; }
     finally { rw.writeLock().unlock(); } }
 
   @Override
-  public final MultiFn removeMethod (final Object dispatch) {
+  public final MultiFn removeMethod (final Object x) {
+    assert isLegalDispatchValue(x) : "not legal:" + x;
     rw.writeLock().lock();
     try {
-      methodTable = dissoc(methodTable,dispatch);
+      methodTable = dissoc(methodTable,x);
       resetCache();
       return this; }
     finally { rw.writeLock().unlock(); } }
@@ -188,8 +228,8 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
   private static final Var parents = RT.var("clojure.core","parents");
 
   private final boolean prefers (final Map hierarky,
-                           final Object x, 
-                           final Object y) {
+                                 final Object x, 
+                                 final Object y) {
 
     final Set xprefs = (Set) preferTable.get(x);
     if (xprefs != null) {
@@ -225,17 +265,19 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
   //--------------------------------------------------------------
 
   @Override
-  public final MultiFn preferMethod (final Object dispatchX,
-                               final Object dispatchY) {
+  public final MultiFn preferMethod (final Object x,
+                                     final Object y) {
+    assert isLegalDispatchValue(x) : "not legal:" + x;
+    assert isLegalDispatchValue(y) : "not legal:" + y;
     rw.writeLock().lock();
     try {
-      if (prefers(cachedHierarchy,dispatchY,dispatchX)) { 
+      if (prefers(cachedHierarchy,y,x)) { 
         throw new IllegalStateException(
           String.format(
             "Preference conflict in multimethod '%s':" +
               "%s is already preferred to %s",
-              name,dispatchY,dispatchX)); }
-      preferTable = add(preferTable,dispatchX,dispatchY);
+              name,y,x)); }
+      preferTable = add(preferTable,x,y);
       resetCache();
       return this; }
     finally { rw.writeLock().unlock(); } }
@@ -327,12 +369,12 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
   public final boolean isA (final Object x,
                             final Object y) {
     return isA((Map) hierarchy,x,y); }
-  
+
   //--------------------------------------------------------------
 
   private final boolean dominates (final Map hierarky,
-                             final Object x, 
-                             final Object y) {
+                                   final Object x, 
+                                   final Object y) {
     return prefers(hierarky,x,y) || isA(hierarky,x,y); }
 
   @Override
@@ -363,11 +405,11 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
       if (! dominates(h,k0,k)) { updated.add(e); } } 
     if (add) { updated.add(e0); }
     return updated; }
-  
+
   private static final Map.Entry first (final Set<Map.Entry> i) {
     return i.iterator().next(); }
-  
-  private final IFn findAndCacheBestMethod (final Object dispatch) {
+
+  private final IFn findAndCacheBestMethod (final Object x) {
     rw.readLock().lock();
     Object bestValue;
     final Map mt = methodTable;
@@ -377,7 +419,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
       Set<Map.Entry> minima = new HashSet(); // should be immutable?
       for (final Object o : methodTable.entrySet()) {
         final Map.Entry e = (Map.Entry) o;
-        if (isA(ch,dispatch,e.getKey())) {
+        if (isA(ch,x,e.getKey())) {
           minima = updateMinima(ch,e,minima); } } 
       if (minima.isEmpty()) { 
         bestValue = methodTable.get(defaultDispatch);
@@ -388,7 +430,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
             "Multiple methods in multimethod '%s' " + 
               "match dispatch value: %s -> %s, " +
               "and none is preferred",
-              name, dispatch, minima));  }
+              name, x, minima));  }
       else {
         bestValue = first(minima).getValue(); } }
     finally { rw.readLock().unlock(); }
@@ -400,28 +442,28 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
         (pt == preferTable) &&
         (ch == cachedHierarchy) &&
         (cachedHierarchy == hierarchy.deref())) {
-        methodCache = assoc(methodCache,dispatch,bestValue);
+        methodCache = assoc(methodCache,x,bestValue);
         return (IFn) bestValue; }
       resetCache();
-      return findAndCacheBestMethod(dispatch); }
+      return findAndCacheBestMethod(x); }
     finally { rw.writeLock().unlock(); } }
 
   //--------------------------------------------------------------
 
   @Override
-  public final IFn getMethod (final Object dispatch) {
+  public final IFn getMethod (final Object x) {
     if(cachedHierarchy != hierarchy.deref()) { resetCache(); }
-    final IFn targetFn = (IFn) methodCache.get(dispatch);
+    final IFn targetFn = (IFn) methodCache.get(x);
     if (targetFn != null) { return targetFn; }
-    return findAndCacheBestMethod(dispatch); }
+    return findAndCacheBestMethod(x); }
 
-  private final IFn getFn (final Object dispatch) {
-    final IFn targetFn = getMethod(dispatch);
+  private final IFn getFn (final Object x) {
+    final IFn targetFn = getMethod(x);
     if (targetFn == null) { 
       throw new IllegalArgumentException(
         String.format(
           "No method in multimethod '%s' for dispatch value: %s",
-          name,dispatch)); }
+          name,x)); }
     return targetFn; }
 
   //--------------------------------------------------------------
