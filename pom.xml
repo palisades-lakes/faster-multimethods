@@ -16,7 +16,7 @@
   <connection>${github-url}</connection>
   <developerConnection>${github-url}</developerConnection>
   <url>${github-url}</url>
-  <tag>faster-multimethods-0.0.8</tag>
+  <tag>HEAD</tag>
  </scm>
  <build>
   <plugins>
@@ -65,7 +65,7 @@
  </build>
  <groupId>palisades-lakes</groupId>
  <artifactId>faster-multimethods</artifactId>
- <version>0.0.8</version>
+ <version>0.0.9-SNAPSHOT</version>
  <description>
  "Backwards compatible alternative to clojure's
  defmulti/defmethod, with about 1/10 the method lookup overhead,
