@@ -10,7 +10,7 @@
  <parent>
   <groupId>palisades-lakes</groupId>
   <artifactId>palisades-lakes-parent</artifactId>
-  <version>0.0.8</version>
+  <version>0.0.9-SNAPSHOT</version>
  </parent>
  <scm>
   <connection>${github-url}</connection>
