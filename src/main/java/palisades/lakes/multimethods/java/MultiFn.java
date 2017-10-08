@@ -8,7 +8,7 @@ import clojure.lang.IPersistentMap;
  *
  * @author palisades dot lakes at gmail dot com
  * @since 2017-07-16
- * @version 2017-10-06
+ * @version 2017-10-08
  */
 @SuppressWarnings("unchecked")
 public interface MultiFn extends IFn {
@@ -24,7 +24,7 @@ public interface MultiFn extends IFn {
    */
   public default void checkLegalDispatchValue (final Object x) {
     if (! isLegalDispatchValue(x)) {
-      throw new IllegalArgumentException("not legal:" + x); } }
+      throw new IllegalArgumentException("not legal: " + x); } }
 
   /** Are methods defined for <code>y</code> applicable to
    * <code>x</code>?
