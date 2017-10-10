@@ -32,37 +32,49 @@ import clojure.lang.RT;
 import clojure.lang.Util;
 import clojure.lang.Var;
 
-/** Semantic changes to clojure.lang.MultiFn.
+/**An implementation of {@link MultiFn} that is (mostly)
+ * backwards compatible with <code>clojure.lang.MultiFn</code>.
+ * <p>
+ *  Semantic changes:
  * 
- * 1) Make <code>prefers</code> transitive:
- * <code>(prefer-method f a b)</code> and 
- * <code>(prefer-method f b c)</code> should imply
- * <code>(prefer-method f a c)</code>, but that's not 
+ * <ol>
+ * <li> Only <code>Class</code> and {@link Signature} are accepted
+ * as dispatch values.
+ 
+ * <li> Make {@link palisades.lakes.multimethods.java.MultiFn#preferMethod(Object,Object)} 
+ * transitive:<br>
+ * I believe
+ * <code>f.preferMethod(a,b)</code> and 
+ * <code>f.preferMethod(b,c)</code> should imply
+ * <code>f.preferMethod(a,c)</code>, but that's not 
  * not true in <code>clojure.lang.MultiFn.prefers(x,y)</code>.
  * 
- * 2) The logic in <code>clojure.lang.MultiFn.prefers(x,y)</code>
+ * <li> The logic in <code>clojure.lang.MultiFn.prefers(x,y)</code>
  * appears to imply that 
- * <code>(prefer-method x some-ancestor-of-y)</code>
- * implies <code>(prefer-method x y)</code>
- * which make no sense to me. 
+ * <code>f.preferMethod(x,ancestorOfY)</code>
+ * implies <code>f.preferMethod(x,y)</code>.
+ * This is not what I would expect. 
  * 
- * 3) Check for legal dispatch value in add-method and 
- * prefer-method.
- * 
- * Performance changes to clojure.lang.MultiFn.
- *
- * 1) Replace persistent data structures with simple
+ * <li> <code>clojure.lang.MultFn.prefers()</code> ignores
+ * the multimethod's hierarchy, so behavior is different between
+ * multimethods that use <code>global-hierarchy</code> vs local.
+ * Changed to explicitly use the local hierarchy in preference
+ * evaluation. 
+ * See <a href="https://dev.clojure.org/jira/browse/CLJ-2234">CLJ-2234</a>.
+ * </ol>
+ * <p>
+ * Performance changes:.
+ * <ol>
+ * <li> Replace persistent data structures with simple
  * unmodifiable HashMaps, etc., requiring some discipline to use
  * mutable objects as immutable.
  * Eventually, should replace with minimal immutable version.
- * 
- * 2) Permit Signature as a dispatch value.
- *
- * 3) No hierarchy or default dispatch value.
- *
+ * <li> Only classes and signatures as a dispatch values.
+ * <li> No hierarchy or default dispatch value.
+ * </ol>
  * @author palisades dot lakes at gmail dot com
  * @since 2017-06-20
- * @version 2017-10-06
+ * @version 2017-10-09
  */
 @SuppressWarnings("unchecked")
 public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
