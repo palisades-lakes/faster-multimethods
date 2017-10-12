@@ -43,7 +43,7 @@ Clojure collections would make this little library unnecessary.
     
     This is backwards compatible; and can be adopted by changing
     the dispatch function from, eg, `[(class a) (class b)]` to
-    `(to-signature a b)`.
+    `(signature a b)`.
     
 3. Permit a `:hierarchy false` option to `defmulti`
 (`nohierarchy` in the plots).
@@ -57,42 +57,64 @@ Clojure collections would make this little library unnecessary.
     are used as dispatch values. In this case, the hierarchy
     is irrelevant. 
     
-    Removing the need for synchronizing with the `hierarchy`,
+    Removing the need for synchronizing with the `hierarchy`
     further reduces the overhead.
     
 ### semantic changes
 
 The current implementation is not quite backwards compatible with 
-Clojure 1.8.0, because it fixes 2 issues with `defmulti/defmethod`
+Clojure 1.8.0, because it adds some input validation,
+fixes 2 issues with `defmulti/defmethod`
 and 4 issues with how the preferred method is found.
 
-1. `defmethod` accepts keywords as dispatch values that aren't 
-namespace qualified, 
-ones where `clojure.core/derive` would throw an exception: 
-[basic-multimethod-test](https://github.com/clojure/clojure/blob/master/test/clojure/test_clojure/multimethods.clj#L161).
-This affects the default dispatch value `:default`,
+<ol>
+<li> Most <code>MultiFn</code>
+API methods here throw <code>IllegalArgumentException</code> if
+the dispatch value(s) are not 'legal'. 
+
+This is the most dubious of the changes I've made,
+and most likely to cause problems to anyone who wants to 
+migrate from <code>clojure.lang.MultiFn</code>.<br>
+
+I would very much appreciate feedback on this issue.<br>
+The Clojure version permits defining methods with anything
+as the dispatch value, but only supports inheritance when
+the dispatch values are <strong>namespace-qualified</strong>
+instances of
+<code>clojure.lang.Named</code>, classes, or 
+an <code>IPersistentVector</code> containing legal dispatch 
+values.
+
+<li> Clojure 1.8.0 <code>defmethod</code> accepts keywords as 
+dispatch values that aren't namespace qualified, 
+ones where <code>clojure.core/derive</code> would throw an exception: 
+<a href="https://github.com/clojure/clojure/blob/master/test/clojure/test_clojure/multimethods.clj#L161">basic-multimethod-test</a>.
+This affects the default dispatch value <code>:default</code>,
 which for now is handled as a special case.
-I'm tempted to replace it with `:clojure.core\default`, or 
-something like that, but that would mean an extra step for 
+I'm tempted to replace it with <code>:clojure.core\default</code>, 
+or something like that, but that would mean an extra step for 
 converting code from Clojure multimethods to faster-multimethods.
 
-2. `:default`, which is not namespace qualified, is used to define
+<li> <code>:default</code>, which is not namespace qualified, 
+is used to define
 a default method, which is called when there are no applicable methods.
 But the default method will also be called if the dispatch
-function returns `:default`.
+function returns <code>:default</code>.
 
-    I suspect having a special fallback default method is an unnecessary
+I suspect having a special fallback default method is an unnecessary
 complication, and likely to hide simple coding errors,
-especially since `defmulti` permits specifying something other
-than `:default` as the no-applicable-methods key.
+especially since <code>defmulti</code> permits specifying 
+something other than <code>:default</code> as the 
+no-applicable-methods key.
 Also, if there is a special no-applicable-methods method, 
 it ought not to be entangled with the hierarchy- and class-based
 method lookup. 
 
-    Despite my reservations, I'm leaving the implementation
-    as is at present, except that only namespace-qualified
-    symbols or keywords may be supplied as alternatives to
-    `:default` in `defmulti`.
+Despite my reservations, I'm leaving the implementation
+as is at present, except that only namespace-qualified
+symbols or keywords may be supplied as alternatives to
+<code>:default</code> in <code>defmulti</code>.
+</ol>
 
 4 issues with [MultiFn.dominates](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L126):
 
@@ -100,12 +122,13 @@ The first issue is pretty clearly a bug, the remaining might be
 attributed to different expectations for how the 
 partial ordering should behave.
 
-1. [MultiFn.prefers()](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105)
+<ol>
+<li> <a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105">MultiFn.prefers</a>
 ignores the multimethod's internal hierarchy.
 This is discussed in 
-[CLJ-2234](https://dev.clojure.org/jira/browse/CLJ-2234),
+<a href="https://dev.clojure.org/jira/browse/CLJ-2234">CLJ-2234</a>,
 which has a patch submitted.
-The problem is that `prefers` calls `parents`
+The problem is that <code>prefers</code> calls <code>parents</code>
 without passing a hierarchy, so it is evaluated relative to the
 global hierarchy, rather than the multimethod's.
 faster-multimethods contains unit tests demonstrating the
@@ -113,15 +136,16 @@ problem in Clojure 1.8.0 and verifying the fix.
 I plan to raise issues for the 3 remaining, more debatable problems
 once this one is resolved.
 
-2. [findAndCacheBestMethod](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L161)
+<li> 
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L161">findAndCacheBestMethod</a>
 doesn't correctly find the minima of the 
-[dominates](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L126)
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L126">dominates</a>
 partial ordering.
-It does a simple reduction of the `methodTable`, 
-maintaining a single `bestEntry`.
+It does a simple reduction of the <code>methodTable</code>, 
+maintaining a single <code>bestEntry</code>.
 If it encounters an entry that is not strictly ordered, 
 in either direction,
-relative to the `bestEntry`, then it throws an exception.
+relative to the <code>bestEntry</code>, then it throws an exception.
 However, it's possible for there to be a later entry which
 would dominate both.
 What the reduction should do is maintain a set of current minima.
@@ -131,87 +155,92 @@ If the current entry is not dominated by any element of the set,
 then it should be added.
 I haven't created a unit test for this issue yet, because I'm not sure 
 how to reliably cause a spurious exception to be thrown.
+</ol>
+The remaining 2 problems could be attributed to differing expectations
+for the transitivity of the
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L126">dominates</a>
+relation.
+My expectation is that 
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L126">dominates</a>
+should be transitive,
+that is: <code>dominates(x,y)</code> and 
+<code>dominates(y,z)</code> should imply <code>dominates(x,z)</code>.
 
-    The remaining 2 problems could be attributed to differing expectations
-    for the transitivity of the
-    [dominates](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L126)
-    relation.
-    My expectation is that [dominates](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L126)
-     should be transitive,
-     that is: `dominates(x,y)` and `dominates(y,z)` should imply `dominates(x,z)`.
+The 
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L126">dominates</a>
+relation is implemented as
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L122">isA</a>
+extended with
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105">prefers</a>
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L122">isA</a>
+which combines Java inheritance with a Clojure hierarchy, is transitive.
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105">prefers</a>
+is not.
 
-    The [dominates](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L126)
-    relation is implemented as
-    [isA](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L122)
-    extended with
-    [prefers](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105).
-    [isA](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L122),
-    which combines Java inheritance with a Clojure hierarchy,
-    is transitive.
-    [prefers](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105).
-    is not.
+The documentation for 
+<a href="https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/prefer-method">prefer-method</a>
+only specifies that <code>(prefer-method f x y)</code> results in methods
+defined for <code>f</code> for dispatch value <code>x</code> will be preferred
+to methods for <code>y</code>.
+One could read this as meaning there is no implied transitivity,
+so that the only pairs in the <code>prefers</code> relation are those
+explicitly defined via <code>prefer-method</code>.
+However, the code doesn't do that either.
 
-    The documentation for 
-    [prefer-method](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/prefer-method)
-    only specifies that `(prefer-method f x y)` results in methods
-    defined for `f` for dispatch value `x` will be preferred
-    to methods for `y`.
-    One could read this as meaning there is no implied transitivity,
-    so that the only pairs in the `prefers` relation are those
-    explicitly defined via `prefer-method`.
-    However, the code doesn't do that either.
-
-    ```java
-    private boolean prefers(Object x, Object y) {
-      IPersistentSet xprefs = (IPersistentSet) getPreferTable().valAt(x);
-      if(xprefs != null && xprefs.contains(y))
-        return true;
-      for(ISeq ps = RT.seq(parents.invoke(y)); ps != null; ps = ps.next())
-        {
-        if(prefers(x, ps.first()))
-          return true;
-        }
-      for(ISeq ps = RT.seq(parents.invoke(x)); ps != null; ps = ps.next())
-        {
-        if(prefers(ps.first(), y))
-          return true;
-        }
-      return false;
+```java
+private boolean prefers(Object x, Object y) {
+  IPersistentSet xprefs = (IPersistentSet) getPreferTable().valAt(x);
+  if(xprefs != null && xprefs.contains(y))
+    return true;
+  for(ISeq ps = RT.seq(parents.invoke(y)); ps != null; ps = ps.next())
+    {
+    if(prefers(x, ps.first()))
+      return true;
     }
-    ```
+  for(ISeq ps = RT.seq(parents.invoke(x)); ps != null; ps = ps.next())
+    {
+    if(prefers(ps.first(), y))
+      return true;
+    }
+  return false;
+  }
+```
 
-    [prefers](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105)
-    first checks to see if there is an explicit edge on the
-    prefer-method graph for `(x,y)`. If so, return true.
-    Fine so far.
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105">prefers</a> first 
+checks to see if there is an explicit edge on the
+prefer-method graph for <code>(x,y)</code>. If so, return true.
+Fine so far.
 
-3. The 2nd step in 
-[prefers](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105)
+<ol start=3>
+<li> The 2nd step in 
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105">prefers</a>
 essentially iterates over the
-[isA](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L122)
-ancestors of `y`, returning true if `x` 
-is preferred to any ancestor of `y`. 
-This implies that `(prefer-method f x Object)` will cause the
-method for `x` to be preferred to a method defined for any other
-Java class or interface `y`, as long as we don't have `isA(x,y)`.
-The fix for this is to just remove the first `for` loop from 
-[prefers](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105).
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L122">isA</a>
+ancestors of <code>y</code>, returning true if <code>x</code> 
+is preferred to any ancestor of <code>y</code>. 
+This implies that <code>(prefer-method f x Object)</code> will cause the
+method for <code>x</code> to be preferred to a method defined for any other
+Java class or interface <code>y</code>, as long as we don't have <code>isA(x,y)</code>.
+The fix for this is to just remove the first <code>for</code> loop from 
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105">MultiFn.prefers</a>.
 faster-multimethods contains a unit test demonstrating
 the behavior of Clojure 1.8.0 and verifying the fix.
 
-    The 3rd step in [prefers](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105)
-    checks to see if any
-    [isA](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L122)
-    ancestor of `x` is preferred to `y`. In this way,
-    [prefers](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105)
-    inherits the transitivity of
-[isA](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L122). This is correct.
+The 3rd step in 
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105">prefers</a>
+checks to see if any
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L122">isA</a>
+ancestor of <code>x</code> is preferred to <code>y</code>. 
+In this way,
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105">prefers</a>
+inherits the transitivity of
+<a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L122">isA</a>.
 
-4. [prefers](https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105)
+<li> <a href="https://github.com/clojure/clojure/blob/clojure-1.8.0/src/jvm/clojure/lang/MultiFn.java#L105">prefers</a>
 is missing the search needed to be completely transitive.
-It needs to check all the keys `k` of the `preferTable`,
-returning true if `prefers(x,k)` and `prefers(k,y)`.
+It needs to check all the keys <code>k</code> of the <code>preferTable</code>,
+returning true if <code>prefers(x,k)</code> and <code>prefers(k,y)</code>.
 faster-multimethod contains a unit test demonstrating
 the non-transitivity of Clojure 1.8.0, and verifying the transitivity
 of its own implementation.
-
+</ol>

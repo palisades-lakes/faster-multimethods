@@ -2,7 +2,7 @@
 
 A _multimethod_ is a Clojure function 
 (an instance of `palisades.lakes.multimethods.java.MultiFn`
-which implements`clojure.lang.IFn`) which, when invoked:
+which implements `clojure.lang.IFn`) which, when invoked:
 
 1. First applies a _dispatch function_ to the arguments, 
 returning a _dispatch value_. 
@@ -22,19 +22,19 @@ method, an exception is thrown.
 The purpose of this document is to explain the process in more
 detail.
 
-(Note: I believe what I describe here is more complicated than necessary,
+Note: I believe what I describe here is more complicated than necessary,
 due to a desire to remain (mostly) consistent with Clojure 1.8.0
 behavior. I've changed certain aspects of the behavior that
 I believe are unintended bugs --- see 
 [changes](https://github.com/palisades-lakes/faster-multimethods/blob/master/docs/changes.md)
-for a detailed discussion. of the differences.)
+for a detailed discussion. of the differences.
 
 ## dispatch function
 
 The dispatch function is responsible for returning 
 _legal dispatch values_.
 
-(**Warning:** 
+**Warning:** 
 Because we want method lookup to be fast,
 the current implementation (like Clojure 1.8.0)
 doesn't validate dispatch values before method lookup. 
@@ -42,9 +42,9 @@ Instead, a possibly mysterious looking exception will be thrown
 some time later.
 You can use `palisades.lakes.multimethods\legal-dispatch-value?`
 in your dispatch function, permanently if you can afford the cost,
-or at least in unit tests, and during development or debugging.)
+or at least in unit tests, and during development or debugging.
     
-## legal dispatch values
+### legal dispatch values
 
 Legal dispatch values are one of (my terminology):
 
@@ -85,7 +85,9 @@ method lookup.
     and don't plan to support it. However, I open to arguments
     for why it would be worth the trouble.)
     
-## applicable methods
+## dispatch value ordering
+    
+### applicable methods (isa<=)
 
 Applicable methods are determined using 
 a partial ordering of dispatch values I'm calling `isa<=`.
@@ -103,7 +105,7 @@ has a function of the same name, but that's provided for
 unit tests/debugging and isn't called during method lookup.)
 
 - `(isa<= f s0 s1)` if `(.isAssignableFrom s1 s0)`,
-when `s0` and `s1` are signatures.
+when `s0` and `s1` are classes or signatures.
 
 - `(isa<= f r0 r1)`, when `r0` and `r1` are recursive dispatch
 values, if `r0` and `r1` are the same shape, and 
@@ -113,10 +115,10 @@ leaves of `r0` and `r1`.
 - `(isa<= f a0 a1)` if `(clojure.core\isa? (.hierarchy f) a0 a1)`
 when `a0` and `a1` are atomic.
 
-    - When `a0` and `a1` are classes, `isa?` ignores the
-    hierarchy, and is just (.isAssignableFrom a1 a0)`.
+    - When `a0` and `a1` are both classes, `isa?` ignores the
+    hierarchy, and is just `(.isAssignableFrom a1 a0)`.
     
-    - When 'a0' is `Named` and 'a1' is a `Class`, `isa?` returns 
+    - When `a0` is `Named` and `a1` is a `Class`, `isa?` returns 
     false. 
     
     - Otherwise, the hierarchy is used. A hierarchy is a directed
@@ -126,17 +128,13 @@ when `a0` and `a1` are atomic.
     child-parent edge relation, that is, the descendant-ancestor
     relation. 
     
-    Note that `(isa? c n)` may be true for a `Class` `c` and
+    **Note:** that `(isa? hierarchy c n)` may be true for 
+    a `Class` `c` and
     a `Named` `n`, but not the other way around.
-    
-    
-       
-    
-    
 
-#### preferred?
+### preferred methods (dominates<)
 
-The `preferred?` (pseudo-code) relation extends `isa?`
+The `dominates<` (pseudo-code) relation extends `isa<=`
 with additional explicit child-parent pairs, created by calling 
 `prefer-method`.
 
@@ -150,7 +148,7 @@ which might or might not be legal dispatch values,
  might not be the same shapes, etc.
 
 `(prefer-method d0 d1)` is only called if there is some `d2`
-such that `(isa? d2 d0)` and `(isa? d2 d1)`,
+such that `(isa<= d2 d0)` and `(isa<= d2 d1)`,
 so edges relating illegal dispatch values, or dispatch values
 of differing shapes, will have no effect.
 
@@ -162,22 +160,12 @@ changed for individual multimethods, making it harder to ensure
 consistent behavior in related multimethods, but at least limiting
 the damage radius of ill-considered changes.
 
-#### default dispatch value
+### default dispatch value
 
 Finally, every multimethod has a special _default dispatch value_
 (defaulting to `:default`).
 A method defined for the _default dispatch value_ will be called
 if there are no applicable methods.
-
-This is likely a design mistake.
-
-For example, `:default` might be a node 
-in the hierarchy, with explicitly defined parents and children
-in the `isa?` relation.
-But the `:default` method will be called for dispatch values
-where `(isa? d :default)` is `false`.
-Possibly `(defdefault ...)` to define a method associated with no
-dispatch value would be better.
 
 ## method lookup
 
@@ -188,18 +176,16 @@ themselves Clojure functions.
 The second step in calling a multimethod has 3 parts:
 
 1. determine which of the defined methods are
-`isa?` applicable to the arguments' dispatch value.
+`isa<=` applicable to the arguments' dispatch value.
 
     If there are no applicable methods, throw an exception.
 
-2. find the `preferred?` minima (most preferred) 
+2. find the `dominates<` minima (most preferred) 
 among the applicable methods.
 
     If there is more than one minimal method, throw an exception.
 
 3. apply the chosen method to the arguments.
 
-**Note:** Methods can be added to and removed from the method table
-at any time (via `defmethod`/`remove-method` below).
 
    
