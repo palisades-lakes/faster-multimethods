@@ -16,15 +16,10 @@
             A B C D A0 B0 C0 D0 A1 B1 C1 D1 A2 B2 C2 D2 E2]))
 ;; mvn clojure:test -Dtest=palisades.lakes.multimethods.test.signatures
 ;;----------------------------------------------------------------
-;; need a function
-(defn extract 
-  ([x0] (d/extract-signature x0))
-  ([x0 x1] (d/extract-signature x0 x1)))
-;;----------------------------------------------------------------
 ;; no hierarky
 ;;----------------------------------------------------------------
 (test/deftest nohierarky-test
-  (d/defmulti nohierarky extract :hierarchy false)
+  (d/defmulti nohierarky d/signature :hierarchy false)
   (test/is (instance? MultiFnWoutHierarchy nohierarky))
   ;; no exception here
   (d/defmethod nohierarky A [x] [A (class x)])

@@ -117,13 +117,25 @@ public final class SignatureN implements Signature {
   public static final SignatureN get (final Class... ks) {
     return new SignatureN(ks); }
 
+//  public static final SignatureN get (final Class k0,
+//                                      final Class k1,
+//                                      final List ks) {
+//    final Class[] classes = new Class[2 + ks.size()];
+//    classes[0] = k0;
+//    classes[1] = k1;
+//    int i = 2;
+//    for (final Object k : ks) { classes[i++] = (Class) k; }
+//    return new SignatureN(classes); }
+
   public static final SignatureN get (final Class k0,
                                       final Class k1,
+                                      final Class k2,
                                       final List ks) {
-    final Class[] classes = new Class[2 + ks.size()];
+    final Class[] classes = new Class[3 + ks.size()];
     classes[0] = k0;
     classes[1] = k1;
-    int i = 2;
+    classes[2] = k2;
+    int i = 3;
     for (final Object k : ks) { classes[i++] = (Class) k; }
     return new SignatureN(classes); }
 

@@ -45,11 +45,11 @@ details about dispatch values, partial ordering, and method lookup.
 (plm/defmulti intersects?
   "Test for general set intersection."
   {}  
-  (fn intersects?-dispatch [s0 s1] (plm/extract-signature s0 s1))
+  (fn intersects?-dispatch [s0 s1] (plm/signature s0 s1))
   :hierarchy false)
   
 (plm/defmethod intersects? 
-  (plm/signature IntegerInterval java.util.Set)
+  (plm/to-signature IntegerInterval java.util.Set)
   [^IntegerInterval s0 ^java.util.Set s1]
   (.intersects s0 s1))
 ...

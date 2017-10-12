@@ -43,7 +43,7 @@ Clojure collections would make this little library unnecessary.
     
     This is backwards compatible; and can be adopted by changing
     the dispatch function from, eg, `[(class a) (class b)]` to
-    `(signature a b)`.
+    `(to-signature a b)`.
     
 3. Permit a `:hierarchy false` option to `defmulti`
 (`nohierarchy` in the plots).
