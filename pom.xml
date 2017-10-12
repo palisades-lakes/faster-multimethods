@@ -65,7 +65,7 @@
  </build>
  <groupId>palisades-lakes</groupId>
  <artifactId>faster-multimethods</artifactId>
- <version>0.0.9-SNAPSHOT</version>
+ <version>0.1.0-SNAPSHOT</version>
  <description>
  "Backwards compatible alternative to clojure's
  defmulti/defmethod, with about 1/10 the method lookup overhead,

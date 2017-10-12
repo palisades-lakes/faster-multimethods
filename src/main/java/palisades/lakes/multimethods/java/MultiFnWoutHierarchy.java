@@ -32,8 +32,8 @@ import clojure.lang.RT;
 import clojure.lang.Util;
 import clojure.lang.Var;
 
-/**An implementation of {@link MultiFn} that is (mostly)
- * backwards compatible with <code>clojure.lang.MultiFn</code>.
+/**An implementation of {@link MultiFn} that optimizes for pure
+ * Class-based method definition and lookup.
  * <p>
  *  Semantic changes:
  * 

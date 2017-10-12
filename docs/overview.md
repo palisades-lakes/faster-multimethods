@@ -45,7 +45,7 @@ details about dispatch values, partial ordering, and method lookup.
 (plm/defmulti intersects?
   "Test for general set intersection."
   {}  
-  (fn intersects?-dispatch [s0 s1] (plm/signature s0 s1))
+  plm/signature
   :hierarchy false)
   
 (plm/defmethod intersects? 

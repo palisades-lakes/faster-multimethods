@@ -14,7 +14,7 @@
 #_(set! *warn-on-reflection* true)
 #_(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
-(def version "0.0.7")
+(def version "0.1.0")
 (def project-name "faster-multimethods")
 (def description "Faster, (almost) backwards compatible multimethods.")
 (def doc-files ["docs/overview.md" 

@@ -6,14 +6,14 @@ for details.
 
 Runtimes for various dynamic method lookup algorithms:
 
-- `hashmaps` (faster-multimethods): Clojure 1.8.0 behavior except 
+- `hashmaps`: (faster-multimethods) Clojure 1.8.0 behavior except 
 for 'bug' fixes. Replaces persistent hashmaps with Java hashmaps.
 (See [changes](changes.html) for details.)
  
-- `signatures`(faster-multimethods): 
+- `signatures`: (faster-multimethods) 
 uses specialized `Signature` dispatch values in place of persistent vectors.
 
-- `nohierarchy`(faster-multimethods): optimizes for pure class-based dispatch.
+- `nohierarchy`: (faster-multimethods) optimizes for pure class-based dispatch.
 
 - `defmulti`: Clojure 1.8.0
 
@@ -21,9 +21,9 @@ uses specialized `Signature` dispatch values in place of persistent vectors.
 with hand-optimized if-then-else `instance?` calls to look up the 
 correct method based on all arguments.
 
-- `instanceof` hand optimized if-then-else Java method lookup;
+- `instanceof`: hand optimized if-then-else Java method lookup;
 
-- `instancefn` same as `instanceof` but implemented in Clojure and
+- `instancefn`: same as `instanceof` but implemented in Clojure and
 invoking Clojure functions
 rather than Java methods.
 
@@ -39,7 +39,7 @@ src="https://raw.githubusercontent.com/palisades-lakes/faster-multimethods/maste
 alt="faster-multimethods vs Clojure 1.8.0 runtimes"
 style="width: 30cm">
 
-Overhead, taking a hand optimized Java if-then-else `instanceof`
+Overhead, taking the hand optimized Java if-then-else `instanceof`
 algorithm as the baseline, as a fraction of the overhead of
 Clojure 1.8.0 `defmulti`:
 

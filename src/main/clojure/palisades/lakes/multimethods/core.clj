@@ -6,12 +6,12 @@
   {:doc "Faster multimethod method lookup."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-06-02"
-   :version "2017-10-11"}
+   :version "2017-10-12"}
   (:refer-clojure :exclude [defmulti defmethod remove-all-methods
                             remove-method prefer-method methods
                             get-method prefers])
   (:import [palisades.lakes.multimethods.java MultiFn
-            Signature2 Signature3 SignatureN]))
+            Signature0 Signature2 Signature3 SignatureN]))
 ;;----------------------------------------------------------------
 
 (defn to-signature 
@@ -20,12 +20,13 @@
    `Signature` for the `Class` valued arguments
     (in the arity 1 case, it just returns the `Class` itself).
 
-   **Warning:** `signature` can only be used 
+   **Warning:** [[to-signature]] can only be used 
    to generate dispatch values for multimethods
    defined with [[palisades.lakes.multimethods.core/defmulti]]."
   
-  {:added "faster-multimethods 0.0.0"}
+  {:added "faster-multimethods 0.0.9"}
   
+  (^Signature0 [] Signature0/INSTANCE)
   (^Class [^Class c0] c0)
   (^Signature2 [^Class c0 ^Class c1] 
     (Signature2. c0 c1))
@@ -36,16 +37,18 @@
 
 (defn signature 
   
-  "Return an appropriate implementation of `Signature` for the
-   arguments, calling `(.getClass xi)` as needed
-   (in the arity 1 case, it returns `(.getClass x0)` itself).
+  "The standard dispatch function for the `:hierarchy false` case.
+   Returns the `Class` of the argument for arity 1,
+   and an appropriate implementation of `Signature` for other 
+   arities, calling `(.getClass xi)` as needed.
 
-   **Warning:** `signature` can only be used 
+   **Warning:** [[signature]] can only be used 
    as a dispatch function with multimethods
    defined with [[palisades.lakes.multimethods.core/defmulti]]."
+
+  {:added "faster-multimethods 0.0.9"}
   
-  {:added "faster-multimethods 0.0.0"}
-  
+  (^Signature0 [] Signature0/INSTANCE)
   (^Class [x0] (.getClass ^Object x0))
   (^Signature2 [x0 x1] 
     (Signature2.
@@ -70,6 +73,29 @@
   [v] 
   (instance? palisades.lakes.multimethods.java.Signature v))   
 ;;----------------------------------------------------------------
+
+(defn legal-dispatch-value? 
+  
+  "Is `v` a legal dispatch value for `multifn`?
+
+   All multimethods accept classes and signatures.
+   Multimethods with a hierarchy also accept namespace
+   qualified symbols and keywords, the special 
+   non-namespace-qualified keyword `:default`,
+   and vectors whose elements are all legal dispatch values,
+   permitting arbitrary nesting.
+  
+   **Note:** [[legal-dispatch-value?]] can only be used 
+   with multimethods
+   defined with [[palisades.lakes.multimethods.core/defmulti]]."
+  
+  {:added "faster-multimethods 0.0.9"}
+  
+  [^MultiFn multifn v]
+  
+  (.isLegalDispatchValue multifn v))
+
+;;----------------------------------------------------------------
 ;; dispatch value partial orderings
 ;; for testing/debugging, not used in method lookup
 ;;----------------------------------------------------------------
@@ -77,66 +103,116 @@
 (defn isa<= 
   "Extension of `clojure.core/isa?`, for a particular multimethod,
   to all legal dispatch values.<br>
-  Not used is method lookup, but may be useful for debugging."
+  <code>([[isa<=]] multifn x y)</code>
+  is eqiuvalent to 
+  <code>(or ([[isa<]] multifn x y) (= x y))</code><br>.
+  [[isa<=]] implies [[dominates<=]].<br>
+
+  Throws an exception if `x` and `y` are not legal dispatch 
+  values for `multifn`.
+
+  Not used in method lookup, which is implemented in Java, but may be useful for debugging."
   {:added "faster-multimethods 0.0.8"}
   [^MultiFn multifn x y]
+  (assert (legal-dispatch-value? multifn x))
+  (assert (legal-dispatch-value? multifn y))
   (.isA multifn x y))
 
 (defn isa< 
   "Extension of `clojure.core/isa?`, for a particular multimethod,
-  to all legal dispatch values."
+  to all legal dispatch values.<br>
+  <code>([[isa<]] multifn x y)</code>
+  is eqiuvalent to 
+  <code>(and ([[isa<=]] multifn x y) (not= x y))</code>.<br>
+  [[isa<]] implies [[dominates<]].
+  
+  Throws an exception if `x` and `y` are not legal dispatch 
+  values for `multifn`.
+
+  Not used in method lookup, which is implemented in Java, but may be useful for debugging."
   {:added "faster-multimethods 0.0.8"}
   [^MultiFn multifn x y]
+  (assert (legal-dispatch-value? multifn x))
+  (assert (legal-dispatch-value? multifn y))
   (and (not= x y) (isa<= multifn x y)))
 
 #_(defn isa>= 
-   "Extension of `clojure.core/isa?`, for a particular multimethod,
+    "Extension of `clojure.core/isa?`, for a particular multimethod,
   to all legal dispatch values.<br>
-  Not used is method lookup, but may be useful for debugging."
-   {:added "faster-multimethods 0.0.8"}
-   [^MultiFn multifn x y]
-   (.isA multifn y x))
+  Not used in method lookup, which is implemented in Java, but may be useful for debugging."
+    {:added "faster-multimethods 0.0.8"}
+    [^MultiFn multifn x y]
+    (assert (legal-dispatch-value? multifn x))
+    (assert (legal-dispatch-value? multifn y))
+    (.isA multifn y x))
 
 #_(defn isa> 
-   "Extension of `clojure.core/isa?`, for a particular multimethod,
-  to all legal dispatch values."
-   {:added "faster-multimethods 0.0.8"}
-   [^MultiFn multifn x y]
-   (and (not= x y) (isa>= multifn x y)))
+    "Extension of `clojure.core/isa?`, for a particular multimethod,
+  to all legal dispatch values.<br>
+  Not used in method lookup, which is implemented in Java, but may be useful for debugging."
+    {:added "faster-multimethods 0.0.8"}
+    [^MultiFn multifn x y]
+    (assert (legal-dispatch-value? multifn x))
+    (assert (legal-dispatch-value? multifn y))
+    (and (not= x y) (isa>= multifn x y)))
 
 ;;----------------------------------------------------------------
 
 (defn dominates<= 
   "Transitive extension of [[isa<=]] with pairs created by
    calls to [[prefer-method]].<br>
-  Not used is method lookup, but may be useful for debugging."
+  <code>([[dominates<=]] multifn x y)</code>
+  is eqiuvalent to 
+  <code>(or ([[dominates<]] multifn x y) (= x y))</code>.<br>
+
+  Throws an exception if `x` and `y` are not legal dispatch 
+  values for `multifn`.
+
+  Not used in method lookup, which is implemented in Java, but may be useful for debugging."
   {:added "faster-multimethods 0.0.8"}
   [^MultiFn multifn x y]
+  (assert (legal-dispatch-value? multifn x))
+  (assert (legal-dispatch-value? multifn y))
   (.dominates multifn x y))
 
 (defn dominates< 
   "Transitive extension of [[isa<]] with pairs created by
    calls to [[prefer-method]].<br>
-  Not used is method lookup, but may be useful for debugging."
+  <code>([[dominates<]] multifn x y)</code>
+  is eqiuvalent to 
+  <code>(and ([[dominates<=]] multifn x y) (not= x y))</code>.<br>
+  
+  Throws an exception if `x` and `y` are not legal dispatch 
+  values for `multifn`.
+
+  Not used in method lookup, which is implemented in Java, but may be useful for debugging."
   {:added "faster-multimethods 0.0.8"}
   [^MultiFn multifn x y]
+  (assert (legal-dispatch-value? multifn x))
+  (assert (legal-dispatch-value? multifn y))
   (and (not= x y) (dominates<= multifn x y)))
 
 #_(defn dominates>= 
-   "Transitive extension of [[isa>=]] with pairs created by
+    "Transitive extension of [[isa>=]] with pairs created by
    calls to [[prefer-method]].<br>
-  Not used is method lookup, but may be useful for debugging."
-   {:added "faster-multimethods 0.0.8"}
-   [^MultiFn multifn x y]
-   (.dominates multifn y x))
+  Not used in method lookup, which is implemented in Java, but may be useful for debugging."
+    {:added "faster-multimethods 0.0.8"}
+    [^MultiFn multifn x y]
+    (assert (legal-dispatch-value? multifn x))
+    (assert (legal-dispatch-value? multifn y))
+    (assert (legal-dispatch-value? multifn x))
+    (assert (legal-dispatch-value? multifn y))
+    (.dominates multifn y x))
 
 #_(defn dominates> 
-   "Transitive extension of [[isa>]] with pairs created by
+    "Transitive extension of [[isa>]] with pairs created by
    calls to [[prefer-method]].<br>
-  Not used is method lookup, but may be useful for debugging."
-   {:added "faster-multimethods 0.0.8"}
-   [^MultiFn multifn x y]
-   (and (not= x y) (dominates>= multifn x y)))
+  Not used in method lookup, which is implemented in Java, but may be useful for debugging."
+    {:added "faster-multimethods 0.0.8"}
+    [^MultiFn multifn x y]
+    (assert (legal-dispatch-value? multifn x))
+    (assert (legal-dispatch-value? multifn y))
+    (and (not= x y) (dominates>= multifn x y)))
 
 ;;----------------------------------------------------------------
 ;; finally the multimethods
@@ -156,40 +232,32 @@
 (defmacro defmulti
   "Creates a new multimethod 
    (an instance of `palisades.lakes.multimethods.java.MultiFn`)
-   named `mm-name` that uses `dispatch-fn` to generate method
-   lookup keys (aka dispatch values).
+   named `mm-name` that uses `dispatch-fn` to generate dispatch 
+   values.
 
-  If the `mm-name` `Var`
-  is already defined and its value is a `MultiFn`, [[defmulti]]
-  silently does nothing. This is the Clojure 1.8.0 [[defmulti]]
-  behavior. 
- 
-;  (This seems to me like bad answer to the problem
-;  of accidentally re-evaluating a given [[defmulti]] and wiping
-;  out all the methods. I think a better design would make
-;  `MultiFn` effectively immutable. [[defmulti]], [[defmethod]],
-;  etc., would return new instances which are updates of the existing
-;  instance, and call `alter-var-root` to update the value of `mm-name`. 
-;  This, I believe, is what `defn` does.)
- 
   - `mm-name`: a namespace qualified `Symbol`. The `MultFn` will
   be the value of the `Var` with that name. 
-
   
   - `docstring?` (optional): documentation string used as the
   `:doc` metadata on `#'mm-name`.
 
-  - `attr-map?` (optional): more metadata for the `#'mm-name`.
+  - `attr-map?` (optional): more metadata for `#'mm-name`.
 
   - `dispatch-fn` an instance of `clojure.lang.IFn` that returns
    _legal dispatch values_ when applied to (supported) arguments 
-   passed to the `MultiFn`. 
-
+   passed to the `MultiFn`. There is no check that the 
+   `dispatch-fn` returns legal values. You may use
+   [[legal-dispatch-value?]] in the `dispatch-fn` to validate
+   the returned value, perhaps only during debugging if 
+   performance is critical.
 
   - `options` (optional): are key-value pairs and may be one of:
 
-      - `:hierarchy` used for method lookup when the dispatch
-        values are or contain namespace-qualified instances of `Named`. 
+      - `:hierarchy`: `false`, `nil`, or a `Var` whose value is a 
+         [hierarchy](https://clojure.org/reference/multimethods).
+        Used for method lookup when the dispatch
+        values are or contain namespace-qualified instances of
+       `Named`. 
         
           See
         [multimethods and hierarchies](https://clojure.org/reference/multimethods)
@@ -198,10 +266,10 @@
           If the `:hierarchy` is not supplied, it defaults to 
          `#'clojure.core/global-hierarchy`.
 
-          If `:hierarchy` is supplied and its value is `nil` or 'false`,
-          then no `Named` or vector dispatch values are permitted;
-          method lookup is optimized assuming classes and 
-          signatures only.
+          If `:hierarchy` is supplied and its value is `nil` or 
+          `false`,
+          then only `Class` and `Signature` dispatch values are 
+          permitted, and method lookup is optimized for that case.
 
           Otherwise the value of the `:hierarchy` option 
           must be a `Var` 
@@ -210,23 +278,50 @@
          `clojure.core/make-hierarchy`.
 
           **Warning:** Multimethods that use hierarchies depend on
-          mutable shared state. 
+          mutable shared state. It is possible for someone else
+          to modify the shared hierarchy in a way that breaks
+          method lookup.
 
           **Warning:** the Clojure hierarchy functions behave 
-        differently for 
-        the default `clojure.core/global-hierarchy` versus a 
-        custom local hierarchy.
+        differently for the default 
+        `#'clojure.core/global-hierarchy` versus a custom local 
+        hierarchy.
         Updates to the global hierarchy call `alter-var-root`
-        on `clojure.core/global-hierarchy`, mutating shared state.
-        Updates to a custom hierarchy return a new updated
-        hashmap; it's left to the caller to rebind any `Var`
-        which might be pointing ot that hashmap.
+        on `#'clojure.core/global-hierarchy`, mutating shared state.
+        Updates to a custom hierarchy return a new hashmap; it's 
+        left to the caller to rebind any `Var`
+        which might be pointing to the original hierarchy. 
+        If you use a 
+        local hierarchy, and modify it after the multimethod is
+        created, it will have no effect unless you explicitly
+        rebind the `Var` that was passed to [[defmulti]].
+        This is an easy mistake to make, and not so easy to see
+        what's wrong.
         
+          **Note:** like the Clojure implementation, there is no
+          way to determine what hierarchy is used by an existing
+          multimethod, which might be useful if you wanted to 
+          ensure a new multimethod had the same inheritance 
+          behavior as an existing one. This may change in a future
+          release.
+
       - `:default`: The default dispatch value, defaults to `:default`.
          Not supported, and an exception is thrown,
           when `:hierarchy false` or `:hierarchy nil`
-          and the value of `:default` is not `false` or `nil`."
+          and the value of `:default` is not `false` or `nil`.
 
+  **Warning:** If `#'mm-name`
+  is already defined and its value is a `MultiFn`, [[defmulti]]
+  silently does nothing. This is the Clojure 1.8.0 [[defmulti]]
+  behavior. This may change in a future release.<br>
+  (This seems to me like bad answer to the problem
+  of accidentally re-evaluating a given [[defmulti]] and wiping
+  out all the methods. I think a better design would make
+  `MultiFn` effectively immutable. [[defmulti]], [[defmethod]],
+  etc., would return new instances which are updates of the existing
+  instance, and call `alter-var-root` to update the value of `#'mm-name`. 
+  This, I believe, is what `defn` does.)"
+  
   {:arglists '([mm-name docstring? attr-map? dispatch-fn & options])
    :added "faster-multimethods 0.0.0"}
   
@@ -278,51 +373,30 @@
 
 ;;----------------------------------------------------------------
 
-(defn legal-dispatch-value? 
-  "Is `v` a legal dispatch value for `multifn`?
-
-   All multimethods accept classes and signatures.
-   Multimethods with a hierarchy also accept namespace
-   qualified symbols and keywords, the special 
-   non-namespace-qualified keyword `:default`,
-   and vectors whose elements are all legal dispatch values,
-   permitting arbitrary nesting.
-  
-   [[legal-dispatch-value?]] can only be used 
-   with multimethods
-   defined with [[palisades.lakes.multimethods.core/defmulti]]."
-  
-  {:added "faster-multimethods 0.0.0"}
-  
-  [^MultiFn multifn v]
-  
-  (.isLegalDispatchValue multifn v))
-
-  ;;----------------------------------------------------------------
-
 (defmacro defmethod
   
   "Creates and installs a new method for `multifn` associated 
-   with `v`. Modifies `multifn` destructively.
+   with dispatch value `v`.
 
    - `multifn`: an instance of 
     `palisades.lakes.multimethods.java.MultiFn`,
     created with [[palisades.lakes.multimethods.core/defmulti]].
 
-   - `v`: satisfies [[legal-dispatch-value?]].
+   - `v`: satisfies <code>([[legal-dispatch-value?]] multifn v)</code>.
 
   - `fn-tail`: one or more of arglist plus function body, which are
      passed to `fn` to generate the method function. Note that
-     signatures are only intended to support single arity method
-     functions.
-
-  **Note:** unlike [[defmulti]], re-evaluating [[defmethod]] will
-  replace any existing method for `v`, mutating `multifn`.
+     signatures only support single arity method functions.
 
   Throws an exception if `v` is not a legal dispatch value for
   `multifn`.
+
+   **Warning:** mutates `multifn`.
   
-   [[defmethod]] can only be used 
+  **Note:** unlike [[defmulti]], re-evaluating [[defmethod]] will
+  replace any existing method for `v`.
+
+  **Note:** [[defmethod]] can only be used 
    with multimethods
    defined with [[palisades.lakes.multimethods.core/defmulti]]."
   
@@ -339,11 +413,12 @@
 ;;----------------------------------------------------------------
 
 (defn remove-all-methods
+  
   "Removes all of the methods of multimethod.
 
-   `[[remove-all-methods]]` can only be used 
+   **Note:** [[remove-all-methods]] can only be used 
    with multimethods defined with 
-   `[[palisades.lakes.multimethods.core/defmulti]]`.
+   [[palisades.lakes.multimethods.core/defmulti]].
 
    **Warning:** despite the name, this actually removes all the 
    _preferences_, in addition to the methods, 
@@ -351,8 +426,7 @@
 
    **Warning:** mutates `multifn`."
   
-  {:added "faster-multimethods 0.0.0"
-   :static true} 
+  {:added "faster-multimethods 0.0.0"} 
   
   [^MultiFn multifn]
   
@@ -361,21 +435,23 @@
 ;;----------------------------------------------------------------
 
 (defn remove-method
-  "Removes the method of multimethod associated with `v`.
+  
+  "Removes the method of multimethod associated with `v`. Does 
+   nothing if no method is defined for `v`.
 
-   [[remove-method]] can only be used 
+   Throws an exception if `v` is not  legal dispatch value
+   for `multifn`.
+  
+   **Note:** [[remove-method]] can only be used 
    with multimethods
    defined with [[palisades.lakes.multimethods.core/defmulti]].
 
-   **Warning:** mutates `multifn`.
-
-   Throws an exception if `v` is not  legal dispatch value
-   for `multifn`."
+   **Warning:** mutates `multifn`."
   
-  {:added {:added "faster-multimethods 0.0.0"}
-   :static true}
+  {:added "faster-multimethods 0.0.0"}
+  
   [^MultiFn multifn v]
-
+  
   (.removeMethod multifn v))
 
 ;;----------------------------------------------------------------
@@ -385,16 +461,15 @@
   "Causes the multimethod to prefer matches of `x` over `y` 
    when there is a conflict.
 
-   [[prefer-method]] can only be used with multimethods
+   Throws an exception if `x` and `y` are not legal dispatch values
+   for `multifn`.
+  
+   **Note:** [[prefer-method]] can only be used with multimethods
    defined with [[palisades.lakes.multimethods.core/defmulti]].
 
-   **Warning:** mutates `multifn`.
-
-   Throws exception if `x` and `y` are not legal dispatch values
-   for `multifn`."
+   **Warning:** mutates `multifn`."
   
-  {:added {:added "faster-multimethods 0.0.0"} 
-   :static true}
+  {:added "faster-multimethods 0.0.0"} 
   
   [^MultiFn multifn x y]
   
@@ -403,15 +478,15 @@
 ;;----------------------------------------------------------------
 
 (defn methods
-
+  
   "Given a multimethod, returns a map of 
-   dispatch values -> method fns.
+   dispatch values -> method functions.
 
-   [[methods]] can only be used with multimethods
+   **Note:** [[methods]] can only be used with multimethods
    defined with [[palisades.lakes.multimethods.core/defmulti]]."
   
-  {:added "faster-multimethods 0.0.0"
-   :static true}
+  {:added "faster-multimethods 0.0.0"}
+  
   [^MultiFn multifn] 
   
   (.getMethodTable multifn))
@@ -419,37 +494,41 @@
 ;;----------------------------------------------------------------
 
 (defn get-method
-
-  "Given a multimethod and a dispatch value, returns the dispatch fn
-  that would apply to that value, or nil if none apply and no default.
-
-   [[get-method]] can only be used with multimethods
-   defined with [[palisades.lakes.multimethods.core/defmulti]].
-
-   Does NOT throw an exception if `v` is an illegal dispatch value
-   for `multifn`; returns `nil` in that case."
   
-  {:added "faster-multimethods 0.0.0"
-   :static true}
+  "Given a multimethod `multifn` and a dispatch value `v`, 
+  returns the defined method function
+  that would be applied to any arglist that resulted in the
+  dispatch value `v`. If there are no methods that are 
+  applicable to `v`, returns `nil`.
+
+  **Note:** [[get-method]] can only be used with multimethods
+  defined with [[palisades.lakes.multimethods.core/defmulti]].
+
+   **Warning:** Does NOT throw an exception if `v` is an illegal 
+   dispatch value for `multifn`; returns `nil` in that case."
+  
+  {:added "faster-multimethods 0.0.0"}
+  
   [^MultiFn multifn v] 
- 
+  
   (.getMethod multifn v))
 
 ;;----------------------------------------------------------------
 
 (defn prefers
-
+  
   "Given a multimethod, returns a map of 
-   preferred value -> set of other values.
+   more preferred dispatch value -> set of less preferred dispatch
+   values.
 
-   [[prefers]] can only be used 
+   **Note:** [[prefers]] can only be used 
    with multimethods
    defined with [[palisades.lakes.multimethods.core/defmulti]]."
   
-  {:added "faster-multimethods 0.0.0"
-   :static true}
+  {:added "faster-multimethods 0.0.0"}
+  
   [^MultiFn multifn] 
-
+  
   (.getPreferTable multifn))
 
 ;;----------------------------------------------------------------

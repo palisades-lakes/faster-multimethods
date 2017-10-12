@@ -6,13 +6,39 @@
   {:doc "prefers transitivity with signature dispatch."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-09-14"
-   :version "2017-10-11"}
+   :version "2017-10-12"}
   (:require [clojure.test :as test]
             [palisades.lakes.multimethods.core :as d]
             [palisades.lakes.multimethods.test.classes])
   (:import [palisades.lakes.multimethods.test.classes 
             A B C D A0 B0 C0 D0 A1 B1 C1 D1 A2 B2 C2 D2 E2]))
 ;; mvn clojure:test -Dtest=palisades.lakes.multimethods.test.signatures
+;;----------------------------------------------------------------
+;; zero arity
+;;----------------------------------------------------------------
+(test/deftest arity
+  (d/defmulti arity d/signature)
+  (d/defmethod arity (d/to-signature) [] 0) 
+  (d/defmethod arity (d/to-signature Object) [a] 1) 
+  (d/defmethod arity (d/to-signature Object Object) [a b] 2) 
+  (d/defmethod arity 
+    (d/to-signature Object Object Object) 
+    [a b c] 
+    3) 
+  (d/defmethod arity 
+    (d/to-signature Object Object Object Object) 
+    [a b c d] 
+    4) 
+  (d/defmethod arity 
+    (d/to-signature Object Object Object Object Object) 
+    [a b c d e] 
+    5) 
+  (test/is (== 0 (arity)))
+  (test/is (== 1 (arity :foo)))
+  (test/is (== 2 (arity :foo :bar)))
+  (test/is (== 3 (arity :foo :bar :foo)))
+  (test/is (== 4 (arity :foo :bar :foo :bar)))
+  (test/is (== 5 (arity :foo :bar :foo :bar :foo))))
 ;;----------------------------------------------------------------
 ;; prefer-method transitivity
 ;;----------------------------------------------------------------
