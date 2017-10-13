@@ -42,7 +42,7 @@ is in [changes](docs/changes.md).
 (plm/defmulti intersects?
   "Test for general set intersection."
   {}  
-  (fn intersects?-dispatch [s0 s1] (plm/signature s0 s1))
+  plm/signature
   :hierarchy false)
   
 (plm/defmethod intersects? 
