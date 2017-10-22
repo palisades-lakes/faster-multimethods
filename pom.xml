@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project
+ xmlns="http://maven.apache.org/POM/4.0.0"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
  <modelVersion>4.0.0</modelVersion>
- <properties>
-  <github-url>scm:git:https://github.com/palisades-lakes/faster-multimethods.git</github-url>
-  <!-- github-url>scm:git:file://.</github-url -->
-  <timestamp>${maven.build.timestamp}</timestamp>
-  <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
- </properties>
+ <groupId>palisades-lakes</groupId>
+ <artifactId>faster-multimethods</artifactId>
+ <description>
+ "Backwards compatible alternative to clojure's
+ defmulti/defmethod, with about 1/10 the method lookup overhead,
+ performance roughly comparable to protocols."
+ </description>
+ <version>0.1.1-SNAPSHOT</version>
  <parent>
   <groupId>palisades-lakes</groupId>
   <artifactId>palisades-lakes-parent</artifactId>
   <version>0.0.10-SNAPSHOT</version>
  </parent>
- <scm>
-  <connection>${github-url}</connection>
-  <developerConnection>${github-url}</developerConnection>
-  <url>${github-url}</url>
-  <tag>HEAD</tag>
- </scm>
  <build>
   <plugins>
    <plugin>
@@ -63,12 +63,4 @@
    </plugin>
   </plugins>
  </build>
- <groupId>palisades-lakes</groupId>
- <artifactId>faster-multimethods</artifactId>
- <version>0.1.1-SNAPSHOT</version>
- <description>
- "Backwards compatible alternative to clojure's
- defmulti/defmethod, with about 1/10 the method lookup overhead,
- performance roughly comparable to protocols."
- </description>
 </project>
