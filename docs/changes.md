@@ -1,5 +1,31 @@
 # change history
 
+## 0.1.1
+
+### Clojure 1.9.0 compatibility
+
+- Macros that expand into `\`(fn foo [] ...)` need to 
+ensure `foo` is not namespace qualified, ie,
+`\`(fn ~'foo [] ...)`
+
+### JDK 9 compatibility
+
+#### illegal reflective access
+
+```
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.parboiled.transform.AsmUtils (file:/C:/porta/projects/faster-multimethods/lib/parboiled-java-1.1.8.jar) to method java.lang.ClassLoader.findLoadedClass(java.lang.String)
+WARNING: Please consider reporting this to the maintainers of org.parboiled.transform.AsmUtils
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+```
+
+can be eliminated, at least for the present, by adding
+
+`--add-opens java.base/java.lang=ALL-UNNAMED`
+
+to the call to `java` in the launcher scripts.
+
 ## changes from Clojure 1.8.0
 
 ### performance improvements

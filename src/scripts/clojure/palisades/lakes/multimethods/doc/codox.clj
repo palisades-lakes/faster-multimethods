@@ -6,39 +6,52 @@
   {:doc "Generate codox for faster-multimethods."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-08-05"
-   :version "2017-09-26"}
+   :date "2017-10-23"}
   
   (:require [clojure.java.io :as io]
-            [codox.main :as codox]))
+            [codox.main :as codox])
+  #_(:import [org.eclipse.jgit.storage.file FileRepositoryBuilder]))
 ;;----------------------------------------------------------------
 #_(set! *warn-on-reflection* true)
 #_(set! *unchecked-math* :warn-on-boxed)
 ;;----------------------------------------------------------------
+;; TODO: get this from the pom somehow?
 (def version "0.1.0")
+(def group "palisades-lakes")
 (def project-name "faster-multimethods")
 (def description "Faster, (almost) backwards compatible multimethods.")
-(def doc-files ["docs/overview.md" 
-                "docs/benchmarks.md" 
-                "docs/lookup.md"
-                "docs/changes.md" ])
+(def doc-files ["docs/overview.md" "docs/benchmarks.md" "docs/lookup.md" 
+                "docs/changes.md"])
 (def namespaces :all)
 ;;----------------------------------------------------------------
-(defn- src-path [branch] (str "src/" branch "/clojure"))
-(defn- src-pattern [branch] (re-pattern (src-path branch)))
-(defn- src-uri [branch]
-  (str "https://github.com/palisades-lakes/"
-       project-name
+(defn- src-path [subfolder] (str "src/" subfolder "/clojure"))
+(defn- src-pattern [subfolder] (re-pattern (src-path subfolder)))
+(defn- src-uri [subfolder]
+  (str "https://github.com/"
+       group
        "/blob/"
        project-name
        "-{version}/"
-       (src-path branch)
+       (src-path subfolder)
        "/{classpath}#L{line}"))
+;; source-uri for a branch rather than a tag
+#_(str ""
+       branch
+       "/--/src/main/clojure/{classpath}#L{line}")
+;;:source-uri "file:///{filepath}#line={line}"
 ;;----------------------------------------------------------------
-(let [source-paths (mapv src-path ["main" #_"test" #_"scripts"])
+(let [#_branch #_(.getBranch 
+                   (.build 
+                     (.findGitDir
+                       (.readEnvironment
+                         (.setGitDir 
+                           (FileRepositoryBuilder.)
+                           (io/file ".git"))))))
+      source-paths (mapv src-path ["main" #_"test" #_"scripts"])
       source-uri (into {} (map #(vector (src-pattern %) (src-uri %))
                                ["main" "test" "scripts"]))
       options {:name project-name
-               :version version 
+               :version version
                :description description
                :language :clojure
                :root-path (io/file "./")
@@ -46,7 +59,7 @@
                :source-paths source-paths
                :source-uri source-uri
                :namespaces namespaces
-               ;;:doc-paths ["docs"]
+               ;;:doc-paths ["docs/codox"]
                :doc-files doc-files
                :html {:namespace-list :flat}
                ;;:exclude-vars #"^(map)?->\p{Upper}"
