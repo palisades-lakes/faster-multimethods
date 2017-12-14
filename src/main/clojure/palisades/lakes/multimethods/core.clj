@@ -9,7 +9,8 @@
   (:refer-clojure :exclude [defmulti defmethod remove-all-methods
                             remove-method prefer-method methods
                             get-method prefers])
-  (:import [palisades.lakes.multimethods.java 
+  (:import [java.util List]
+           [palisades.lakes.multimethods.java 
             Classes MultiFn Signature
             Signature0 Signature2 Signature3 SignatureN]))
 ;;----------------------------------------------------------------
@@ -33,7 +34,7 @@
   (^Signature3 [^Class c0 ^Class c1 ^Class c2] 
     (Signature3. c0 c1 c2))
   (^SignatureN [^Class c0 ^Class c1 ^Class c2 & cs] 
-    (SignatureN. c0 c1 c2 ^clojure.lang.ArraySeq cs)))
+    (SignatureN. c0 c1 c2 ^List cs)))
 
 (defn signature 
   

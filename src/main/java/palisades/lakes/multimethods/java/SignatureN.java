@@ -3,8 +3,6 @@ package palisades.lakes.multimethods.java;
 import java.util.List;
 import java.util.Objects;
 
-import clojure.lang.ArraySeq;
-
 /** An immutable 'array list' of classes, for optimizing 
  * multimethod dispatch functions.
  *
@@ -17,7 +15,7 @@ public final class SignatureN implements Signature {
 
   // TODO: separate 1st k Classes to make constructor faster?
   // might also make isAssignableFrom faster in the false case.
-  // TODO: replace Class[] with ArraySeq to make Clojure 
+  // TODO: replace Class[] with List to make Clojure 
   // interface simpler?
 
   public final Class[] classes;
@@ -103,9 +101,9 @@ public final class SignatureN implements Signature {
   public SignatureN (final Class c0,
                      final Class c1,
                      final Class c2,
-                     final ArraySeq as) {
+                     final List as) {
     // not really safe, trying to be fast, maybe not worth it
-    final Object[] cs = as.array;
+    final Object[] cs = as.toArray();
     final int n = cs.length + 3;
     assert n > 3;
     classes = new Class[n];
@@ -141,9 +139,9 @@ public final class SignatureN implements Signature {
   public static final SignatureN extract (final Object x0,
                                           final Object x1,
                                           final Object x2,
-                                          final ArraySeq as) {
+                                          final List as) {
     // not really safe, trying to be fast, maybe not worth it
-    final Object[] xs = as.array;
+    final Object[] xs = as.toArray();
     final int n = xs.length + 3;
     assert n > 3;
     final Class[] cs = new Class[n];
