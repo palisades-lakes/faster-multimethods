@@ -40,7 +40,7 @@
   "The standard dispatch function for the `:hierarchy false` case.
    Returns the `Class` of the argument for arity 1,
    and an appropriate implementation of `Signature` for other 
-   arities, calling `(Classes/getClass xi)` as needed.
+   arities, calling `(Classes/classOf xi)` as needed.
 
    **Warning:** [[signature]] can only be used 
    as a dispatch function with multimethods
@@ -49,21 +49,21 @@
   {:added "faster-multimethods 0.0.9"}
   
   (^Signature0 [] Signature0/INSTANCE)
-  (^Class [x0] (Classes/getClass ^Object x0))
+  (^Class [x0] (Classes/classOf ^Object x0))
   (^Signature2 [x0 x1] 
     (Signature2.
-      (Classes/getClass ^Object x0)
-      (Classes/getClass ^Object x1)))
+      (Classes/classOf ^Object x0)
+      (Classes/classOf ^Object x1)))
   (^Signature3 [x0 x1 x2] 
     (Signature3.
-      (Classes/getClass ^Object x0)
-      (Classes/getClass ^Object x1)
-      (Classes/getClass ^Object x2)))
+      (Classes/classOf ^Object x0)
+      (Classes/classOf ^Object x1)
+      (Classes/classOf ^Object x2)))
   (^SignatureN [x0 x1 x2 & xs] 
     (SignatureN/get 
-      (Classes/getClass ^Object x0)
-      (Classes/getClass ^Object x1)
-      (Classes/getClass ^Object x2) 
+      (Classes/classOf ^Object x0)
+      (Classes/classOf ^Object x1)
+      (Classes/classOf ^Object x2) 
       (mapv class xs))))
 
 (defn signature? 

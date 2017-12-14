@@ -101,9 +101,9 @@ public final class Signature3 implements Signature {
                                           final Object k1,
                                           final Object k2) {
     return new Signature3(
-      Classes.getClass(k0),
-      Classes.getClass(k1),
-      Classes.getClass(k2)); }
+      Classes.classOf(k0),
+      Classes.classOf(k1),
+      Classes.classOf(k2)); }
 
   //--------------------------------------------------------------
 }

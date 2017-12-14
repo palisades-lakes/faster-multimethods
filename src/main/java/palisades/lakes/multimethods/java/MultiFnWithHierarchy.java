@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -118,7 +119,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
       (x instanceof Class) || 
       ((x instanceof Named) && 
         (null != namespace.invoke(x))) ||
-      kdefault.equals(x); }
+      Objects.equals(kdefault,x); }
 
   private static final boolean isRecursiveDispatchValue (final Object x) {
     if (! (x instanceof IPersistentVector)) { return false; }
@@ -264,7 +265,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
     // keys of the preferTable.
     // TODO: does this make the next loop unnecessary?
     for (final Object k : preferTable.keySet()) {
-      if ((!x.equals(k)) 
+      if ((!Objects.equals(x,k)) 
         && isA(hierarky,x,k) 
         && prefers(hierarky,k,y)) {
         return true; } }
@@ -343,11 +344,11 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
                                     final Object child,
                                     final Object parent) {
 
-    if (child.equals(parent)) { return true; }
+    if (Objects.equals(child,parent)) { return true; }
 
     if ((child instanceof Class) && (parent instanceof Class)) {
       // Note: not correct for primitive types like Float/TYPE
-      if (((Class) parent).isAssignableFrom((Class) child)) {
+      if (Classes.isAssignableFrom((Class) parent,(Class) child)) {
         return true; } }
 
     final Map ancestorMap = (Map) h.get(ANCESTORS);

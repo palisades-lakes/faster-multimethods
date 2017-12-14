@@ -119,16 +119,6 @@ public final class SignatureN implements Signature {
   public static final SignatureN get (final Class... ks) {
     return new SignatureN(ks); }
 
-//  public static final SignatureN get (final Class k0,
-//                                      final Class k1,
-//                                      final List ks) {
-//    final Class[] classes = new Class[2 + ks.size()];
-//    classes[0] = k0;
-//    classes[1] = k1;
-//    int i = 2;
-//    for (final Object k : ks) { classes[i++] = (Class) k; }
-//    return new SignatureN(classes); }
-
   public static final SignatureN get (final Class k0,
                                       final Class k1,
                                       final Class k2,
@@ -145,7 +135,7 @@ public final class SignatureN implements Signature {
     final int n = xs.length;
     assert n > 3;
     final Class[] ks = new Class[n];
-    for (int i=0;i<n;i++) { ks[i] = Classes.getClass(xs[i]); }
+    for (int i=0;i<n;i++) { ks[i] = Classes.classOf(xs[i]); }
     return new SignatureN(ks); }
 
   public static final SignatureN extract (final Object x0,
@@ -157,11 +147,11 @@ public final class SignatureN implements Signature {
     final int n = xs.length + 3;
     assert n > 3;
     final Class[] cs = new Class[n];
-    cs[0] = Classes.getClass(x0);
-    cs[1] = Classes.getClass(x1);
-    cs[2] = Classes.getClass(x2);
+    cs[0] = Classes.classOf(x0);
+    cs[1] = Classes.classOf(x1);
+    cs[2] = Classes.classOf(x2);
     for (int i=3,j=0;i<n;i++,j++) { 
-      cs[i] = Classes.getClass(xs[j]); } 
+      cs[i] = Classes.classOf(xs[j]); } 
     return new SignatureN(cs); }
 
   //--------------------------------------------------------------

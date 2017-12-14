@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -73,8 +74,7 @@ import clojure.lang.Var;
  * <li> No hierarchy or default dispatch value.
  * </ol>
  * @author palisades dot lakes at gmail dot com
- * @since 2017-06-20
- * @version 2017-10-09
+ * @version 2017-12-13
  */
 @SuppressWarnings("unchecked")
 public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
@@ -213,7 +213,7 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
     // keys of the preferTable.
     // TODO: does this make the next loop unnecessary?
     for (final Object k : preferTable.keySet()) {
-      if ((!x.equals(k)) 
+      if ((!Objects.equals(x,k)) 
         && isA(x,k) 
         && prefers(k,y)) { 
         return true; } }
@@ -255,7 +255,7 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   private static final boolean isA (final Class child,
                                     final Class parent) {
     // Note: not correct for primitive types like Float/TYPE
-    return parent.isAssignableFrom(child); }
+    return Classes.isAssignableFrom(parent,child); }
 
   private static final boolean isA (final Signature child,
                                     final Signature parent) {
@@ -273,7 +273,7 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
   public final boolean isA (final Object child,
                             final Object parent) {
 
-    if (child.equals(parent)) { return true; }
+    if (Objects.equals(child,parent)) { return true; }
 
     if ((child instanceof Class) && (parent instanceof Class)) {
       return isA((Class) child, (Class)parent); }

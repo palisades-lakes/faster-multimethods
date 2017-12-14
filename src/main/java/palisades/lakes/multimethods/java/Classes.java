@@ -26,7 +26,7 @@ public final class Classes {
   //--------------------------------------------------------------
   /** Null safe <code>getClass</code>.
    */
-  public static Class getClass (final Object x) {
+  public static Class classOf (final Object x) {
     if (null == x) { return null; }
     return x.getClass(); }
   //--------------------------------------------------------------

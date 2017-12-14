@@ -62,7 +62,7 @@ public final class Signature2 implements Signature {
   public final boolean equals (final Object that) {
     if (this == that) { return true; }
     if (! (that instanceof Signature2)) { return false; }
-    if (hash != that.hashCode()) { return false; }
+    if (hash != ((Signature2) that).hash) { return false; }
     if (! Objects.equals(class0,((Signature2) that).class0)) {
       return false; }
     if (! Objects.equals(class1,((Signature2) that).class1)) {
@@ -92,8 +92,8 @@ public final class Signature2 implements Signature {
   public static final Signature2 extract (final Object k0,
                                           final Object k1) {
     return new Signature2(
-      Classes.getClass(k0),
-      Classes.getClass(k1)); }
+      Classes.classOf(k0),
+      Classes.classOf(k1)); }
 
   //--------------------------------------------------------------
 }
