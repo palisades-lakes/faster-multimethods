@@ -1,11 +1,12 @@
 package palisades.lakes.multimethods.java;
 
+import java.util.Objects;
+
 /** A triple of classes, for optimizing multimethod dispatch
  * functions.
  *
  * @author palisades dot lakes at gmail dot com
- * @since 2017-06-05
- * @version 2017-10-09
+ * @version 2017-12-13
  */
 
 @SuppressWarnings("unchecked")
@@ -19,11 +20,11 @@ public final class Signature3 implements Signature {
 
   public final boolean isAssignableFrom (final Signature3 that) {
     return
-      class0.isAssignableFrom(that.class0)
+      Classes.isAssignableFrom(class0,that.class0)
       &&
-      class1.isAssignableFrom(that.class1)
+      Classes.isAssignableFrom(class1,that.class1)
       &&
-      class2.isAssignableFrom(that.class2); }
+      Classes.isAssignableFrom(class2,that.class2); }
 
   //--------------------------------------------------------------
 
@@ -43,9 +44,11 @@ public final class Signature3 implements Signature {
                                          final Class k1,
                                          final Class k2) {
     return
-      class0.isAssignableFrom(k0) &&
-      class1.isAssignableFrom(k1) &&
-      class2.isAssignableFrom(k2); }
+      Classes.isAssignableFrom(class0,k0) 
+      &&
+      Classes.isAssignableFrom(class1,k1) 
+      &&
+      Classes.isAssignableFrom(class2,k2); }
 
   @Override
   public final boolean isAssignableFrom (final Class... ks) {
@@ -58,28 +61,28 @@ public final class Signature3 implements Signature {
   @Override
   public final int hashCode () {
     return
-      (37*((37*((37*17) + class0.hashCode()))
-        + class1.hashCode()))
-      + class2.hashCode(); }
+      (37*((37*((37*17) + Objects.hashCode(class0)))
+        + Objects.hashCode(class1)))
+      + Objects.hashCode(class2); }
 
   @Override
   public final boolean equals (final Object that) {
     if (this == that) { return true; }
     if (that instanceof Signature3) {
       return
-        class0.equals(((Signature3) that).class0)
+        Objects.equals(class0,((Signature3) that).class0)
         &&
-        class1.equals(((Signature3) that).class1)
+        Objects.equals(class1,((Signature3) that).class1)
         &&
-        class2.equals(((Signature3) that).class2); }
+        Objects.equals(class2,((Signature3) that).class2); }
     return false; }
 
   @Override
   public final String toString () {
     return "(" + getClass().getSimpleName() + ". "
-      + class0.getName() + " "
-      + class1.getName() + " "
-      + class2.getName() + ")"; }
+      + Classes.getName(class0) + " "
+      + Classes.getName(class1) + " "
+      + Classes.getName(class2) + ")"; }
 
   //--------------------------------------------------------------
   // TODO: memoize singleton instances?
@@ -98,9 +101,9 @@ public final class Signature3 implements Signature {
                                           final Object k1,
                                           final Object k2) {
     return new Signature3(
-      k0.getClass(),
-      k1.getClass(),
-      k2.getClass()); }
+      Classes.getClass(k0),
+      Classes.getClass(k1),
+      Classes.getClass(k2)); }
 
   //--------------------------------------------------------------
 }

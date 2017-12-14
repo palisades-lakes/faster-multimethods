@@ -5,12 +5,12 @@
   
   {:doc "Faster multimethod method lookup."
    :author "palisades dot lakes at gmail dot com"
-   :since "2017-06-02"
-   :version "2017-10-12"}
+   :version "2017-12-13"}
   (:refer-clojure :exclude [defmulti defmethod remove-all-methods
                             remove-method prefer-method methods
                             get-method prefers])
-  (:import [palisades.lakes.multimethods.java MultiFn
+  (:import [palisades.lakes.multimethods.java 
+            Classes MultiFn Signature
             Signature0 Signature2 Signature3 SignatureN]))
 ;;----------------------------------------------------------------
 
@@ -40,7 +40,7 @@
   "The standard dispatch function for the `:hierarchy false` case.
    Returns the `Class` of the argument for arity 1,
    and an appropriate implementation of `Signature` for other 
-   arities, calling `(.getClass xi)` as needed.
+   arities, calling `(Classes/getClass xi)` as needed.
 
    **Warning:** [[signature]] can only be used 
    as a dispatch function with multimethods
@@ -49,21 +49,21 @@
   {:added "faster-multimethods 0.0.9"}
   
   (^Signature0 [] Signature0/INSTANCE)
-  (^Class [x0] (.getClass ^Object x0))
+  (^Class [x0] (Classes/getClass ^Object x0))
   (^Signature2 [x0 x1] 
     (Signature2.
-      (.getClass ^Object x0)
-      (.getClass ^Object x1)))
+      (Classes/getClass ^Object x0)
+      (Classes/getClass ^Object x1)))
   (^Signature3 [x0 x1 x2] 
     (Signature3.
-      (.getClass ^Object x0)
-      (.getClass ^Object x1)
-      (.getClass ^Object x2)))
+      (Classes/getClass ^Object x0)
+      (Classes/getClass ^Object x1)
+      (Classes/getClass ^Object x2)))
   (^SignatureN [x0 x1 x2 & xs] 
     (SignatureN/get 
-      (.getClass ^Object x0)
-      (.getClass ^Object x1)
-      (.getClass ^Object x2) 
+      (Classes/getClass ^Object x0)
+      (Classes/getClass ^Object x1)
+      (Classes/getClass ^Object x2) 
       (mapv class xs))))
 
 (defn signature? 

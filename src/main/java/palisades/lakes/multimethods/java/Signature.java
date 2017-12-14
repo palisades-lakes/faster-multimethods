@@ -13,16 +13,15 @@ package palisades.lakes.multimethods.java;
  * does NOT implement <code>java.util.List</code>.
  * 
  * @author palisades dot lakes at gmail dot com
- * @since 2017-06-05
- * @version 2017-10-09
+ * @version 2017-12-13
  */
 
+@SuppressWarnings("unchecked")
 public interface Signature {
 
   //--------------------------------------------------------------
   // inheritance partial ordering
   //--------------------------------------------------------------
-
   /** If <code>this.isAssignableFrom(that)</code>,
    * then a method defined for <code>this</code> can be used
    * on an arglist whose signature is <code>that</code>.
@@ -57,7 +56,5 @@ public interface Signature {
    * instances in a common special case.
    */
   boolean isAssignableFrom (Class... ks);
-
-  //--------------------------------------------------------------
 }
 //--------------------------------------------------------------

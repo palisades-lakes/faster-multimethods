@@ -12,7 +12,7 @@
  defmulti/defmethod, with about 1/10 the method lookup overhead,
  performance roughly comparable to protocols."
  </description>
- <version>0.1.1-SNAPSHOT</version>
+ <version>0.2.0-SNAPSHOT</version>
  <parent>
   <groupId>palisades-lakes</groupId>
   <artifactId>palisades-lakes-parent</artifactId>

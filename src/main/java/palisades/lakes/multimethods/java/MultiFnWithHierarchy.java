@@ -86,8 +86,7 @@ import clojure.lang.Var;
  *</ol>
  *
  * @author palisades dot lakes at gmail dot com
- * @since 2017-06-20
- * @version 2017-10-09
+ * @version 2017-12-13
  */
 @SuppressWarnings("unchecked")
 public final class MultiFnWithHierarchy extends AFn implements MultiFn {
@@ -115,6 +114,7 @@ public final class MultiFnWithHierarchy extends AFn implements MultiFn {
 
   private static final boolean isAtomicDispatchValue (final Object x) {
     return
+      (null == x) ||
       (x instanceof Class) || 
       ((x instanceof Named) && 
         (null != namespace.invoke(x))) ||

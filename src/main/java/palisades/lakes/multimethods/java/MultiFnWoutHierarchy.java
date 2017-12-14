@@ -103,7 +103,10 @@ public final class MultiFnWoutHierarchy extends AFn implements MultiFn {
 
   @Override
   public final boolean isLegalDispatchValue (final Object x) {
-    return (x instanceof Class) || (x instanceof Signature); }
+    return 
+      (null == x) || 
+      (x instanceof Class) || 
+      (x instanceof Signature); }
 
   //--------------------------------------------------------------
 

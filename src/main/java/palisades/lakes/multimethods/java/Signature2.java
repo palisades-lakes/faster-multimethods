@@ -1,5 +1,7 @@
 package palisades.lakes.multimethods.java;
 
+import java.util.Objects;
+
 /** A pair of classes, for optimizing multimethod dispatch
  * functions.
  *
@@ -19,9 +21,9 @@ public final class Signature2 implements Signature {
 
   public final boolean isAssignableFrom (final Signature2 that) {
     return
-      class0.isAssignableFrom(that.class0)
+      Classes.isAssignableFrom(class0,that.class0)
       &&
-      class1.isAssignableFrom(that.class1); }
+      Classes.isAssignableFrom(class1,that.class1); }
 
   //--------------------------------------------------------------
 
@@ -35,9 +37,9 @@ public final class Signature2 implements Signature {
   public final boolean isAssignableFrom (final Class k0,
                                          final Class k1) {
     return 
-      class0.isAssignableFrom(k0) 
+      Classes.isAssignableFrom(class0,k0) 
       && 
-      class1.isAssignableFrom(k1); }
+      Classes.isAssignableFrom(class1,k1); }
 
   @Override
   public final boolean isAssignableFrom (final Class k0,
@@ -59,24 +61,27 @@ public final class Signature2 implements Signature {
   @Override
   public final boolean equals (final Object that) {
     if (this == that) { return true; }
-    if (that instanceof Signature2) {
-      return
-        hash == that.hashCode()
-        &&
-        class0.equals(((Signature2) that).class0)
-        &&
-        class1.equals(((Signature2) that).class1); }
-    return false; }
+    if (! (that instanceof Signature2)) { return false; }
+    if (hash != that.hashCode()) { return false; }
+    if (! Objects.equals(class0,((Signature2) that).class0)) {
+      return false; }
+    if (! Objects.equals(class1,((Signature2) that).class1)) {
+      return false; }
+    return true; }
 
   @Override
   public final String toString () {
-    return class0.getSimpleName() + "_" + class1.getSimpleName(); }
+    return 
+      Classes.getSimpleName(class0) + 
+      "_" + 
+      Classes.getSimpleName(class1); }
 
   //--------------------------------------------------------------
   // TODO: memoize singleton instances?
 
   public Signature2 (final Class k0, final Class k1) {
-    hash = (37*((37*17) + k0.hashCode())) + k1.hashCode();
+    hash = 37*((37*17) + Objects.hashCode(k0)) 
+      + Objects.hashCode(k1);
     class0 = k0; 
     class1 = k1; }
 
@@ -86,7 +91,9 @@ public final class Signature2 implements Signature {
 
   public static final Signature2 extract (final Object k0,
                                           final Object k1) {
-    return new Signature2(k0.getClass(),k1.getClass()); }
+    return new Signature2(
+      Classes.getClass(k0),
+      Classes.getClass(k1)); }
 
   //--------------------------------------------------------------
 }

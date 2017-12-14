@@ -1,6 +1,7 @@
 package palisades.lakes.multimethods.java;
 
 import java.util.List;
+import java.util.Objects;
 
 import clojure.lang.ArraySeq;
 
@@ -8,8 +9,7 @@ import clojure.lang.ArraySeq;
  * multimethod dispatch functions.
  *
  * @author palisades dot lakes at gmail dot com
- * @since 2017-06-05
- * @version 2017-10-09
+ * @version 2017-12-13
  */
 
 @SuppressWarnings("unchecked")
@@ -28,7 +28,7 @@ public final class SignatureN implements Signature {
     final Class[] those = that.classes;
     if (classes.length != those.length) { return false; }
     for (int i=0;i<classes.length;i++) {
-      if (! classes[i].isAssignableFrom(those[i])) {
+      if (! Classes.isAssignableFrom(classes[i],those[i])) {
         return false; } }
     return true; }
 
@@ -55,7 +55,7 @@ public final class SignatureN implements Signature {
   public final boolean isAssignableFrom (final Class... ks) {
     if (classes.length != ks.length) { return false; }
     for (int i=0;i<classes.length;i++) {
-      if (! classes[i].isAssignableFrom(ks[i])) {
+      if (! Classes.isAssignableFrom(classes[i],ks[i])) {
         return false; } }
     return true; }
 
@@ -67,16 +67,18 @@ public final class SignatureN implements Signature {
   public final int hashCode () {
     int result = 17;
     for (final Class c : classes) {
-      result = (37*result) + c.hashCode(); }
+      result = (37*result) + Objects.hashCode(c); }
     return result; }
 
   @Override
   public final boolean equals (final Object that) {
     if (this == that) { return true; }
-    if (that instanceof SignatureN) {
-      if (classes.equals(((SignatureN) that).classes)) { 
-        return true; } }
-    return false; }
+    if (! (that instanceof SignatureN)) { return false; }
+    final Class[] those = ((SignatureN) that).classes;
+    for (int i=0;i<classes.length;i++) {
+      if (! Objects.equals(classes[i],those[i])) {
+        return false; } }
+    return true; }
 
   @Override
   public final String toString () {
@@ -85,7 +87,7 @@ public final class SignatureN implements Signature {
     builder.append(getClass().getSimpleName());
     builder.append(". ");
     for (final Class c : classes) {
-      builder.append(c.getName());
+      builder.append(Classes.getName(c));
       builder.append(" "); }
     builder.append(")");
     return builder.toString(); }
@@ -143,7 +145,7 @@ public final class SignatureN implements Signature {
     final int n = xs.length;
     assert n > 3;
     final Class[] ks = new Class[n];
-    for (int i=0;i<n;i++) { ks[i] = xs[i].getClass(); }
+    for (int i=0;i<n;i++) { ks[i] = Classes.getClass(xs[i]); }
     return new SignatureN(ks); }
 
   public static final SignatureN extract (final Object x0,
@@ -155,11 +157,11 @@ public final class SignatureN implements Signature {
     final int n = xs.length + 3;
     assert n > 3;
     final Class[] cs = new Class[n];
-    cs[0] = x0.getClass();
-    cs[1] = x1.getClass();
-    cs[2] = x2.getClass();
+    cs[0] = Classes.getClass(x0);
+    cs[1] = Classes.getClass(x1);
+    cs[2] = Classes.getClass(x2);
     for (int i=3,j=0;i<n;i++,j++) { 
-      cs[i] = xs[j].getClass(); } 
+      cs[i] = Classes.getClass(xs[j]); } 
     return new SignatureN(cs); }
 
   //--------------------------------------------------------------
