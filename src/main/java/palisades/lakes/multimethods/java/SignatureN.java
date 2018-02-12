@@ -7,7 +7,7 @@ import java.util.Objects;
  * multimethod dispatch functions.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2017-12-13
+ * @version 2018-02-12
  */
 
 @SuppressWarnings("unchecked")
@@ -65,7 +65,7 @@ public final class SignatureN implements Signature {
   public final int hashCode () {
     int result = 17;
     for (final Class c : classes) {
-      result = (37*result) + Objects.hashCode(c); }
+      result = (31*result) + Objects.hashCode(c); }
     return result; }
 
   @Override

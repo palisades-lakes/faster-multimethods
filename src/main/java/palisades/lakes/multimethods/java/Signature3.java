@@ -6,7 +6,7 @@ import java.util.Objects;
  * functions.
  *
  * @author palisades dot lakes at gmail dot com
- * @version 2017-12-13
+ * @version 2018-02-12
  */
 
 @SuppressWarnings("unchecked")
@@ -61,7 +61,7 @@ public final class Signature3 implements Signature {
   @Override
   public final int hashCode () {
     return
-      (37*((37*((37*17) + Objects.hashCode(class0)))
+      (31*((31*((31*17) + Objects.hashCode(class0)))
         + Objects.hashCode(class1)))
       + Objects.hashCode(class2); }
 

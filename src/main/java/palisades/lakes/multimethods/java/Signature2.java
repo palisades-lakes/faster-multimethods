@@ -6,8 +6,7 @@ import java.util.Objects;
  * functions.
  *
  * @author palisades dot lakes at gmail dot com
- * @since 2017-06-02
- * @version 2017-10-09
+ * @version 2018-02-12
  */
 
 @SuppressWarnings("unchecked")
@@ -80,7 +79,7 @@ public final class Signature2 implements Signature {
   // TODO: memoize singleton instances?
 
   public Signature2 (final Class k0, final Class k1) {
-    hash = 37*((37*17) + Objects.hashCode(k0)) 
+    hash = 31*((31*17) + Objects.hashCode(k0)) 
       + Objects.hashCode(k1);
     class0 = k0; 
     class1 = k1; }
