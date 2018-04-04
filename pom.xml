@@ -49,6 +49,7 @@
      </execution>
     </executions>
     <configuration>
+     <vmArgs>-ea -dsa</vmArgs>
      <clojureOptions>-Dclojure.compiler.direct-linking=true</clojureOptions>
      <namespaces>
       <namespace>!palisades.lakes.multimethods.doc.*</namespace>
