@@ -5,7 +5,7 @@
   {:doc "Check MultiFn.prefers(x,y), prefer-method, etc."
    :author "palisades dot lakes at gmail dot com"
    :since "2017-08-12"
-   :version "2017-08-25"}
+   :version "2022-04-07"}
   (:require [clojure.test :as test]
             [palisades.lakes.multimethods.core :as fmc]))
 ;; mvn clojure:test -Dtest=palisades.lakes.multimethods.test.prefer
@@ -161,11 +161,13 @@
   (prefer-method local ::local-b ::local-a)
   ;; this should not throw the exception
   (test/is 
-    #_(= [::local-c ::local-d] (local ::local-d))
-    (thrown-with-msg? 
-      IllegalArgumentException 
-      #"Multiple methods in multimethod"
-      (= [::local-c ::local-d] (local ::local-d))))
+    (= [::local-c ::local-d] (local ::local-d))
+    ;; 2022-04-07
+    ;; fixed in clojure 1.11.1
+    #_(thrown-with-msg? 
+        IllegalArgumentException 
+        #"Multiple methods in multimethod"
+        (= [::local-c ::local-d] (local ::local-d))))
   
   (fmc/defmulti fmc-local identity :hierarchy #'hierarchy)
   (fmc/defmethod fmc-local ::local-a [x] [::local-a x]) 
