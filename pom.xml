@@ -5,7 +5,7 @@
  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
 >
  <modelVersion>4.0.0</modelVersion>
- <groupId>palisades-lakes</groupId>
+ <!-- groupId>palisades-lakes</groupId -->
  <artifactId>faster-multimethods</artifactId>
  <description>
  "Backwards compatible alternative to clojure's
@@ -49,7 +49,7 @@
      </execution>
     </executions>
     <configuration>
-     <vmArgs>${clojure.vmargs}</vmArgs>
+     <vmargs>${clojure.vmargs}</vmargs>
      <clojureOptions>${clojure.options}</clojureOptions>
      <namespaces>
       <namespace>!palisades.lakes.multimethods.doc.*</namespace>
